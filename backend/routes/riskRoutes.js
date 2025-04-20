@@ -1,8 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const { calculateRisk, predictRisk } = require("../controllers/riskController");
+const { calculateRiskMetrics } = require("../controllers/riskController");
 
-router.post("/calculate", calculateRisk);
-router.post("/predict", predictRisk);
+router.post("/calculate", calculateRiskMetrics);
 
 module.exports = router;
