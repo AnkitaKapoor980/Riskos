@@ -1,21 +1,18 @@
 const axios = require("axios");
 
-const calculateRisk = async (req, res) => {
+const calculateRiskMetrics = async (req, res) => {
     try {
-        const response = await axios.post(`${process.env.FLASK_API_URL}/calculate-risk`, req.body);
+        const portfolio = req.body.portfolio;
+
+        // Send portfolio data to Flask API for risk calculation
+        const response = await axios.post("http://127.0.0.1:5000/calculate-risk", {
+            portfolio: portfolio
+        });
+
         res.json(response.data);
     } catch (error) {
-        res.status(500).json({ message: "Error calculating risk metrics", error: error.message });
+        res.status(500).json({ message: "Risk calculation failed", error: error.message });
     }
 };
 
-const predictRisk = async (req, res) => {
-    try {
-        const response = await axios.post(`${process.env.FLASK_API_URL}/predict-risk`, req.body);
-        res.json(response.data);
-    } catch (error) {
-        res.status(500).json({ message: "Error predicting risk metrics", error: error.message });
-    }
-};
-
-module.exports = { calculateRisk, predictRisk };
+module.exports = { calculateRiskMetrics };
