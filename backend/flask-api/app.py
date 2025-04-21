@@ -1,3 +1,4 @@
+import os
 from flask_cors import CORS
 from flask import Flask, request, jsonify
 from utils.data_loader import load_stock_data
@@ -13,7 +14,8 @@ app = Flask(__name__)
 # Enable CORS for the entire app
 CORS(app)
 
-folder_path = "backend\\flask-api\\Scripts"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+folder_path = os.path.join(BASE_DIR, 'Scripts')
 stock_prices = load_stock_data(folder_path)
 returns = stock_prices.pct_change().dropna()
 
