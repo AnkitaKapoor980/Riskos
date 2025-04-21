@@ -1,7 +1,6 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const { getLatestNews } = require("../controllers/newsController");
+const { getStockNews } = require('../controllers/newsController');
 
-router.get("/latest", getLatestNews);
-
+router.get('/', getStockNews); // This maps to /api/news/
 module.exports = router;
