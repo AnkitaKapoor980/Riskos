@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "concurrently \"npm run server\" \"npm run flask\"",
+    "server": "node server.js",
+    "flask": "cd flask-api && python app.py"
   },
   "author": "",
   "license": "ISC",
@@ -18,5 +21,8 @@
     "mongoose": "^8.12.1",
     "node-fetch": "^3.3.2",
     "yahoo-finance2": "^2.13.3"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
   }
 }
