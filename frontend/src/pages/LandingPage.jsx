@@ -7,7 +7,7 @@ function LandingPage() {
       {/* Hero Section */}
       <section className="w-4/5 flex flex-col md:flex-row mt-10 space-y-6 md:space-y-0 md:space-x-6">
         <div className="bg-teal-900 text-white p-6 flex flex-col justify-center w-full md:w-2/5">
-          <h1 className="text-3xl font-bold">HEAD SECTION TAG LINE</h1>
+          <h1 className="text-3xl font-bold">Make smart investments </h1>
           <ul className="mt-4 space-y-2">
             <li>➜ Feature 1</li>
             <li>➜ Feature 2</li>
