@@ -4,6 +4,7 @@ import { StockMarketNews } from './pages/StockMarketNews';
 import { LiveMarketData } from './pages/LiveMarketData';
 import { LandingPage } from './pages/LandingPage'
 import { PortfolioDashboard } from './pages/PortfolioDashboard';
+import { Assessment } from './pages/Assessment';
 function App() {
   return (
     <div className="min-h-screen bg-gray-50">
@@ -13,6 +14,7 @@ function App() {
         <Route path="/news" element={<StockMarketNews />} />
         <Route path="/market-data" element={<LiveMarketData />} />
         <Route path="/portfolio" element={<PortfolioDashboard />} />
+        <Route path="/assessment" element={<Assessment />} />
       </Routes>
 
       {/* Footer */}
