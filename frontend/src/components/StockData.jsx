@@ -9,18 +9,18 @@ const StockData = ({ symbol }) => {
   useEffect(() => {
     const fetchStockData = async () => {
       try {
-        const response = await axios.get(`/api/stock/${symbol}`);
-        setStockData(response.data);
-        setLoading(false);
+        console.log("Requesting symbol:", symbol);
+        const res = await axios.get(`/api/price/${symbol}`);
+        console.log("Response for", symbol, res.data);
+        setStockData(res.data);
       } catch (err) {
-        setError(err.response ? err.response.data.message : err.message);
-        setLoading(false);
+        console.error("Error fetching data for", symbol, err);
       }
     };
-
+  
     fetchStockData();
   }, [symbol]);
-
+  
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
   if (!stockData) return <div>No data available</div>;
