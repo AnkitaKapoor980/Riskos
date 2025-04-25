@@ -2,14 +2,14 @@ import React from "react";
 import { Carousel } from "react-responsive-carousel";
 import "react-responsive-carousel/lib/styles/carousel.min.css";
 import { Link } from "react-router-dom";
-import Img1 from '../assets/pexels-pixabay-534216.jpg';
-import Img2 from '../assets/photo-1486406146926-c627a92ad1ab.jpg';
-import Img3 from '../assets/signing-electronic-documents-on-digital-documents-online-businessman-with-contract-electronic-signature-e-signing-digital-document-management-paperless-office-signing-business-contract-concept-photo.jpg';
+import Img1 from '../assets/img1.jpg';
+import Img2 from '../assets/img2.jpg';
+import Img3 from '../assets/img3.jpg';
 
 
 function LandingPage() {
   return (
-    <div className="bg-[#f5f5ec] min-h-screen text-black font-sans">
+    <div className="bg-[#ffffff] min-h-screen text-black font-sans">
       
       {/* Hero Section */}
       <section className="relative w-full h-[500px] overflow-hidden">
