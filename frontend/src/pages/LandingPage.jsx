@@ -38,10 +38,10 @@ function LandingPage() {
         <div className="absolute top-0 left-0 w-full h-full flex items-center">
           <div className="bg-teal-900 bg-opacity-70 relative w-full h-[500px] overflow-hidden flex items-center justify-center">
             <div className="flex flex-col items-center text-center text-white">
-              <h1 className="text-4xl font-extrabold leading-tight mb-4">
+              <h1 className="text-6xl font-extrabold leading-tight mb-4">
               RISKOS<br />Do Better.
               </h1>
-              <ul className="space-y-2 text-base mb-6">
+              <ul className="space-y-2 text-lg mb-10">
                 <li>Better Investments for a better future</li>
               </ul>
             </div>
@@ -53,9 +53,9 @@ function LandingPage() {
       {/* Info Section */}
       <section className="w-11/12 max-w-6xl mx-auto mt-16 grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
         <div>
-          <h2 className="text-lg font-bold">
+          <h1 className="text-lg font-bold">
             Telling about all the company<br />and what companies we include
-          </h2>
+          </h1>
           <p className="mt-2 text-sm text-gray-700">
             Consist real-time stock price data of all the Nifty-50 listed companies. Includes text text text text.
           </p>
@@ -79,7 +79,6 @@ function LandingPage() {
           <button className="mt-4 bg-white text-black text-sm px-4 py-2 rounded">Sign up for free ➜</button>
         </div>
       </section>
-
       
     </div>
   );
