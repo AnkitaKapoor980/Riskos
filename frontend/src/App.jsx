@@ -28,48 +28,6 @@ function App() {
 
         {/* Footer - now stays at bottom */}
         <footer className="bg-black text-white py-10 text-sm w-full">
-          <div className="w-11/12 max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-5 gap-6">
-            <div>
-              <h4 className="font-semibold mb-2">Features</h4>
-              <ul className="space-y-1">
-                <li>Text</li>
-                <li>Text</li>
-                <li>Text</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-2">For business</h4>
-              <ul className="space-y-1">
-                <li>Text</li>
-                <li>Text</li>
-                <li>Text</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-2">Pricing</h4>
-              <ul className="space-y-1">
-                <li>Text</li>
-                <li>Text</li>
-                <li>Text</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-2">Help</h4>
-              <ul className="space-y-1">
-                <li>Text</li>
-                <li>Text</li>
-                <li>Text</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-2">About Us</h4>
-              <ul className="space-y-1">
-                <li>Text</li>
-                <li>Text</li>
-                <li>Text</li>
-              </ul>
-            </div>
-          </div>
           <div className="text-center mt-8 text-xs text-gray-400">
             <p>2025 Company Ltd. All rights reserved. <a href="#">Privacy Policy</a> <a href="#">Terms of Use</a> <a href="#">Cookie Policy</a> <a href="#">Manage Cookies</a></p>
             <div className="mt-4 flex justify-center gap-3">

@@ -10,59 +10,46 @@ import Img3 from '../assets/signing-electronic-documents-on-digital-documents-on
 function LandingPage() {
   return (
     <div className="bg-[#f5f5ec] min-h-screen text-black font-sans">
-
+      
       {/* Hero Section */}
-      <section className="w-11/12 max-w-6xl mx-auto mt-10 grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-teal-900 text-white p-6 flex flex-col justify-between">
+      <section className="relative w-full h-[500px] overflow-hidden">
+        
+        {/* Carousel as background */}
+        <Carousel
+          autoPlay
+          infiniteLoop
+          showThumbs={false}
+          showStatus={false}
+          interval={3000}
+          className="h-full"
+        >
           <div>
-            <h1 className="text-3xl font-extrabold leading-tight">HEAD SECTION<br />TAG LINE</h1>
-            <ul className="mt-4 space-y-1 text-sm">
-              <li>➜ Feature 1</li>
-              <li>➜ Feature 2</li>
-              <li>➜ Feature 3</li>
-            </ul>
+            <img src={Img1} alt="Stock Market" className="object-cover w-full h-[500px]" />
           </div>
-          <div className="mt-6 text-sm">
-            <p>Want to know more ?</p>
-            <div className="flex gap-3 mt-3">
-              <button className="bg-indigo-900 text-white px-4 py-2 rounded">Sign Up</button>
-              <button className="bg-white text-black px-4 py-2 rounded border">Log In</button>
+          <div>
+            <img src={Img2} alt="Skyscrapers" className="object-cover w-full h-[500px]" />
+          </div>
+          <div>
+            <img src={Img3} alt="Digital Documents" className="object-cover w-full h-[500px]" />
+          </div>
+        </Carousel>
+
+        {/* Teal content overlay */}
+        <div className="absolute top-0 left-0 w-full h-full flex items-center">
+          <div className="bg-teal-900 bg-opacity-70 relative w-full h-[500px] overflow-hidden flex items-center justify-center">
+            <div className="flex flex-col items-center text-center text-white">
+              <h1 className="text-4xl font-extrabold leading-tight mb-4">
+              RISKOS<br />Do Better.
+              </h1>
+              <ul className="space-y-2 text-base mb-6">
+                <li>Better Investments for a better future</li>
+              </ul>
             </div>
           </div>
-        </div>
-        <div className="h-64">
-          <Carousel
-            autoPlay
-            infiniteLoop
-            showThumbs={false}
-            showStatus={false}
-            interval={3000}
-            className="h-full"
-          >
-            <div>
-              <img
-                src={Img1}
-                alt="Stock Market"
-                className="object-cover w-full h-64"
-              />
-            </div>
-            <div>
-              <img
-                src={Img2}
-                alt="Skyscrapers"
-                className="object-cover w-full h-64"
-              />
-            </div>
-            <div>
-              <img
-                src={Img3}
-                alt="Digital Documents"
-                className="object-cover w-full h-64"
-              />
-            </div>
-          </Carousel>
-        </div>
+        </div>  
+
       </section>
+
       {/* Info Section */}
       <section className="w-11/12 max-w-6xl mx-auto mt-16 grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
         <div>
