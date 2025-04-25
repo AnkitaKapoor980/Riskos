@@ -1,24 +1,15 @@
 import React from "react";
+import { Carousel } from "react-responsive-carousel";
+import "react-responsive-carousel/lib/styles/carousel.min.css";
 import { Link } from "react-router-dom";
+import Img1 from '../assets/pexels-pixabay-534216.jpg';
+import Img2 from '../assets/photo-1486406146926-c627a92ad1ab.jpg';
+import Img3 from '../assets/signing-electronic-documents-on-digital-documents-online-businessman-with-contract-electronic-signature-e-signing-digital-document-management-paperless-office-signing-business-contract-concept-photo.jpg';
+
 
 function LandingPage() {
   return (
     <div className="bg-[#f5f5ec] min-h-screen text-black font-sans">
-      {/* Navbar */}
-      <nav className="bg-black text-white px-6 py-3 flex justify-between items-center">
-        <div className="font-bold">LOGO</div>
-        <div className="hidden md:flex gap-6 text-sm">
-          <Link to="#">News</Link>
-          <Link to="#">Live Market Data</Link>
-          <Link to="#">Assessment</Link>
-          <Link to="#">Learn</Link>
-          <Link to="#">About Us</Link>
-        </div>
-        <div className="flex gap-3">
-          <button className="bg-white text-black px-3 py-1 rounded text-sm">Log In</button>
-          <button className="bg-[#3e5745] text-white px-3 py-1 rounded text-sm">Sign Up</button>
-        </div>
-      </nav>
 
       {/* Hero Section */}
       <section className="w-11/12 max-w-6xl mx-auto mt-10 grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -39,11 +30,39 @@ function LandingPage() {
             </div>
           </div>
         </div>
-        <div className="bg-gray-300 h-64 flex items-center justify-center">
-          <span className="text-gray-600">Image/Carousel</span>
+        <div className="h-64">
+          <Carousel
+            autoPlay
+            infiniteLoop
+            showThumbs={false}
+            showStatus={false}
+            interval={3000}
+            className="h-full"
+          >
+            <div>
+              <img
+                src={Img1}
+                alt="Stock Market"
+                className="object-cover w-full h-64"
+              />
+            </div>
+            <div>
+              <img
+                src={Img2}
+                alt="Skyscrapers"
+                className="object-cover w-full h-64"
+              />
+            </div>
+            <div>
+              <img
+                src={Img3}
+                alt="Digital Documents"
+                className="object-cover w-full h-64"
+              />
+            </div>
+          </Carousel>
         </div>
       </section>
-
       {/* Info Section */}
       <section className="w-11/12 max-w-6xl mx-auto mt-16 grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
         <div>
