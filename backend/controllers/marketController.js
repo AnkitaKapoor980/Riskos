@@ -1,7 +1,10 @@
 // controllers/marketController.js
-import fetch from 'node-fetch';
-import dotenv from 'dotenv';
-import yahooFinance from 'yahoo-finance2';  // Ensure Yahoo Finance module is imported
+//import fetch from 'node-fetch';
+//import dotenv from 'dotenv';
+//import yahooFinance from 'yahoo-finance2';  // Ensure Yahoo Finance module is imported
+const fetch = require('node-fetch');
+const dotenv = require('dotenv');
+const yahooFinance = require('yahoo-finance2').default;
 
 dotenv.config(); // Load environment variables from .env
 

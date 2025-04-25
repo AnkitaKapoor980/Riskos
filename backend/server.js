@@ -13,6 +13,8 @@ app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/risk", require("./routes/riskRoutes"));
 app.use("/api/news", require("./routes/newsRoutes"));
 app.use("/api/market", require("./routes/marketRoutes"));
+// Make sure the LiveRoute is added with the correct path to match your frontend requests
+app.use("/api/live", require("./routes/LiveRoute")); // Changed to /api/market
 
 app.get("/", (req,res) => {
     res.send("RISKOS Backend is Running!")
