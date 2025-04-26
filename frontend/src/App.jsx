@@ -8,6 +8,7 @@ import { Assessment } from './pages/Assessment';
 import { LoginPage } from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
 import { AuthProvider } from './context/AuthContext';
+import AboutUsPage  from './pages/AboutUsPage';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
             <Route path="/assessment" element={<Assessment />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
+            <Route path="/about" element={<AboutUsPage />} />
           </Routes>
         </main>
 
