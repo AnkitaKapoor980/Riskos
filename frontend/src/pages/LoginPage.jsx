@@ -1,53 +1,34 @@
-import { useState, useContext } from "react";
-import { AuthContext } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from 'react';
+import { useAuth } from '../context/AuthContext'; // Ensure the path is correct
 
 const LoginPage = () => {
-  const [form, setForm] = useState({ email: "", password: "" });
-  const { login } = useContext(AuthContext);
-  const navigate = useNavigate();
+  const { login } = useAuth(); // Use the context's login function
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    const success = await login(form.email, form.password);
-    if (success) navigate("/dashboard");
+    // Handle the login logic here, then call login with user data
+    login({ email });
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white p-6 rounded shadow-md w-full max-w-sm"
-      >
-        <h2 className="text-2xl font-bold mb-4">Login</h2>
+    <div>
+      <h1>Login</h1>
+      <form onSubmit={handleSubmit}>
         <input
           type="email"
-          name="email"
           placeholder="Email"
-          value={form.email}
-          onChange={handleChange}
-          className="w-full p-2 mb-4 border rounded"
-          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
         />
         <input
           type="password"
-          name="password"
           placeholder="Password"
-          value={form.password}
-          onChange={handleChange}
-          className="w-full p-2 mb-4 border rounded"
-          required
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
         />
-        <button
-          type="submit"
-          className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
-        >
-          Login
-        </button>
+        <button type="submit">Login</button>
       </form>
     </div>
   );

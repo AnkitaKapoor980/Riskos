@@ -1,28 +1,62 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-const connectDB = require("./db");
+const mongoose = require("mongoose");
+const connectDB = require("./db"); // MongoDB connection file
+const authRoutes = require("./routes/authRoutes");
+const riskRoutes = require("./routes/riskRoutes");
+const newsRoutes = require("./routes/newsRoutes");
+const marketRoutes = require("./routes/marketRoutes");
+const predictionRoutes = require("./routes/predictionRoutes");
 
 const app = express();
+
+// Middleware
 app.use(express.json());
-app.use(cors({
-    origin: "http://localhost:5001", // React frontend port
+
+// CORS configuration (adjust based on your frontend port)
+app.use(
+  cors({
+    origin: "http://localhost:5001",  // React frontend URL
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type"],
-  }));
+  })
+);
 
-connectDB();
+// MongoDB connection
+connectDB(); // Connect to MongoDB
 
-app.use("/api/auth", require("./routes/authRoutes"));
-app.use("/api/risk", require("./routes/riskRoutes"));
-app.use("/api/news", require("./routes/newsRoutes"));
-app.use("/api/market", require("./routes/marketRoutes"));
+// Routes
+app.use("/api/auth", authRoutes);
+app.use("/api/risk", riskRoutes);
+app.use("/api/news", newsRoutes);
+app.use("/api/market", marketRoutes);
+app.use("/api/predict", predictionRoutes);
 
-app.get("/", (req,res) => {
-    res.send("RISKOS Backend is Running!")  
+// Example of getting current user (authentication should be handled properly)
+app.get("/api/auth/current-user", (req, res) => {
+  const user = req.user; // Assuming user info is attached to the request (JWT or session)
+  if (user) {
+    res.json(user);  // If user exists, return user data
+  } else {
+    res.status(404).json({ message: "User not found" });
+  }
 });
 
+// Base route (optional)
+app.get("/", (req, res) => {
+  res.send("RISKOS Backend is Running!");
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err);
+  res.status(500).json({ error: err.message });
+});
+
+// Start Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`)
+  console.log(`Server is running on port ${PORT}`);
 });
+

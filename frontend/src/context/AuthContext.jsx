@@ -1,52 +1,21 @@
-import React, { createContext, useState, useEffect } from "react";
-import axios from "axios";
+import React, { createContext, useState, useContext } from 'react';
 
-export const AuthContext = createContext();
+// Create the context
+const AuthContext = createContext();
 
+// Create the AuthProvider component that will wrap your app
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      axios
-        .get("http://localhost:5000/api/auth/me", {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        .then((res) => setUser(res.data))
-        .catch(() => setUser(null));
-    }
-  }, []);
-
-  const login = async (email, password) => {
-    const res = await axios.post("http://localhost:5000/api/auth/login", {
-      email,
-      password,
-    });
-    localStorage.setItem("token", res.data.token);
-    const meRes = await axios.get("http://localhost:5000/api/auth/me", {
-      headers: { Authorization: `Bearer ${res.data.token}` },
-    });
-    setUser(meRes.data);
-  };
-
-  const register = async (username, email, password) => {
-    await axios.post("http://localhost:5000/api/auth/register", {
-      username,
-      email,
-      password,
-    });
-    return login(email, password); // auto-login after register
-  };
-
-  const logout = () => {
-    localStorage.removeItem("token");
-    setUser(null);
-  };
+  const login = (userData) => setUser(userData);
+  const logout = () => setUser(null);
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout }}>
+    <AuthContext.Provider value={{ user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
 };
+
+// Custom hook to use the AuthContext
+export const useAuth = () => useContext(AuthContext);

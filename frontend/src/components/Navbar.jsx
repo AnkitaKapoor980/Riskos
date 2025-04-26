@@ -27,6 +27,7 @@ export function Navbar() {
               <NavLink to="/news">News</NavLink>
               <NavLink to="/market-data">Live Market Data</NavLink>
               <NavLink to="/assessment">Assessment</NavLink>
+              <NavLink to="/risk-prediction">Risk Prediction</NavLink>
               <NavLink to="/learn">Learn</NavLink>
               <NavLink to="/about">About Us</NavLink>
             </div>

@@ -20,6 +20,8 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.12.1",
     "node-fetch": "^3.3.2",
+    "python-shell": "^5.0.0",
+    "react-responsive-carousel": "^3.2.23",
     "yahoo-finance2": "^2.13.3"
   },
   "devDependencies": {
