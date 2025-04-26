@@ -20,7 +20,7 @@ function LandingPage() {
           infiniteLoop
           showThumbs={false}
           showStatus={false}
-          interval={3000}
+          interval={2000}
           className="h-full"
         >
           <div>
@@ -54,12 +54,12 @@ function LandingPage() {
       <section className="w-11/12 max-w-6xl mx-auto mt-16 grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
         <div>
           <h1 className="text-lg font-bold">
-            Telling about all the company<br />and what companies we include
+            Making investements easy<br />Easier and Smarter.
           </h1>
           <p className="mt-2 text-sm text-gray-700">
-            Consist real-time stock price data of all the Nifty-50 listed companies. Includes text text text text.
+            Consist real-time stock price data of all the Nifty-50 listed companies.
           </p>
-          <button className="mt-4 bg-gray-200 text-sm px-4 py-2 rounded border">View our partners ➜</button>
+          <button className="mt-4 bg-gray-200 text-sm px-4 py-2 rounded border">Learn More ➜</button>
         </div>
         <div className="bg-gray-300 h-48 flex items-center justify-center">
           <span className="text-gray-600">Image</span>
