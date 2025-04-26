@@ -39,5 +39,5 @@ const StockData = ({ symbol }) => {
   );
 };
 
-export default StockData;
+export { StockData };
 

@@ -9,7 +9,7 @@ const LoginPage = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const success = await login(form.email, form.password);
     if (!success) alert("Invalid email or password.");

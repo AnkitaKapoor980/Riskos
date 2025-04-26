@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { StockTabs } from '../components/StockTabs';
-import StockData from '../components/StockData';
+import { StockData } from '../components/StockData';
 
 export function LiveMarketData() {
   const [activeTab, setActiveTab] = useState('most-active');
