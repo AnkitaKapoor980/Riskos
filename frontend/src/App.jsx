@@ -9,6 +9,7 @@ import { Assessment } from './pages/Assessment';
 import { LoginPage } from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
 import { AuthProvider } from './context/AuthContext';
+import { Learn } from './pages/Learn';
 import ErrorBoundary from './components/ErrorBoundary';  // Importing the error boundary
 
 function App() {
@@ -28,7 +29,8 @@ function App() {
               <Route path="/risk-prediction" element={<RiskAnalysisPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
-            </Routes>
+              <Route path="/learn" element={ <Learn />} />
+          </Routes>
           </ErrorBoundary>
         </main>
 

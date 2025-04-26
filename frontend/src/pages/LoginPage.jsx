@@ -1,15 +1,18 @@
-import React, { useState } from 'react';
-import { useAuth } from '../context/AuthContext'; // Ensure the path is correct
+import { useState, useContext } from "react";
+import { AuthContext } from "../context/AuthContext";
 
 const LoginPage = () => {
-  const { login } = useAuth(); // Use the context's login function
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [form, setForm] = useState({ email: "", password: "" });
+  const { login } = useContext(AuthContext);
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Handle the login logic here, then call login with user data
-    login({ email });
+    const success = await login(form.email, form.password);
+    if (!success) alert("Invalid email or password.");
   };
 
   return (

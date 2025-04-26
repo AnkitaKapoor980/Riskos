@@ -2,14 +2,14 @@ import React from "react";
 import { Carousel } from "react-responsive-carousel";
 import "react-responsive-carousel/lib/styles/carousel.min.css";
 import { Link } from "react-router-dom";
-import Img1 from '../assets/pexels-pixabay-534216.jpg';
-import Img2 from '../assets/photo-1486406146926-c627a92ad1ab.jpg';
-import Img3 from '../assets/signing-electronic-documents-on-digital-documents-online-businessman-with-contract-electronic-signature-e-signing-digital-document-management-paperless-office-signing-business-contract-concept-photo.jpg';
+import Img1 from '../assets/img1.jpg';
+import Img2 from '../assets/img2.jpg';
+import Img3 from '../assets/img3.jpg';
 
 
 function LandingPage() {
   return (
-    <div className="bg-[#f5f5ec] min-h-screen text-black font-sans">
+    <div className="bg-[#ffffff] min-h-screen text-black font-sans">
       
       {/* Hero Section */}
       <section className="relative w-full h-[500px] overflow-hidden">
@@ -20,7 +20,7 @@ function LandingPage() {
           infiniteLoop
           showThumbs={false}
           showStatus={false}
-          interval={3000}
+          interval={2000}
           className="h-full"
         >
           <div>
@@ -54,12 +54,12 @@ function LandingPage() {
       <section className="w-11/12 max-w-6xl mx-auto mt-16 grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
         <div>
           <h1 className="text-lg font-bold">
-            Telling about all the company<br />and what companies we include
+            Making investements easy<br />Easier and Smarter.
           </h1>
           <p className="mt-2 text-sm text-gray-700">
-            Consist real-time stock price data of all the Nifty-50 listed companies. Includes text text text text.
+            Consist real-time stock price data of all the Nifty-50 listed companies.
           </p>
-          <button className="mt-4 bg-gray-200 text-sm px-4 py-2 rounded border">View our partners ➜</button>
+          <button className="mt-4 bg-gray-200 text-sm px-4 py-2 rounded border">Learn More ➜</button>
         </div>
         <div className="bg-gray-300 h-48 flex items-center justify-center">
           <span className="text-gray-600">Image</span>
