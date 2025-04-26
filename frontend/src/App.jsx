@@ -9,6 +9,7 @@ import { Assessment } from './pages/Assessment';
 import { LoginPage } from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
 import { AuthProvider } from './context/AuthContext';
+import AboutUsPage  from './pages/AboutUsPage';
 import { Learn } from './pages/Learn';
 import ErrorBoundary from './components/ErrorBoundary';  // Importing the error boundary
 
@@ -30,6 +31,7 @@ function App() {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
               <Route path="/learn" element={ <Learn />} />
+            <Route path="/about" element={<AboutUsPage />} />
           </Routes>
           </ErrorBoundary>
         </main>

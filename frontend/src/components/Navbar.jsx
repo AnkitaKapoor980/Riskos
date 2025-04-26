@@ -1,5 +1,4 @@
 import { Link, useNavigate } from "react-router-dom";
-import clsx from "clsx";
 import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import logo from "../assets/riskosalt.png";
@@ -26,20 +25,25 @@ export function Navbar() {
     <nav className="bg-white shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
+          
+          {/* Left side - Logo and Links */}
           <div className="flex items-center space-x-4">
             <Link to="/">
               <img className="h-10 w-auto" src={logo} alt="Riskos Logo" />
             </Link>
+
+            {/* Navigation Links */}
             <div className="hidden sm:flex sm:space-x-6">
               <NavLink to="/news">News</NavLink>
               <NavLink to="/market-data">Live Market Data</NavLink>
               <NavLink to="/assessment">Assessment</NavLink>
               <NavLink to="/risk-prediction">Risk Prediction</NavLink>
               <NavLink to="/learn">Learn</NavLink>
-              <NavLink to="/about">About Us</NavLink>
+              <NavLink to="/about">About Us</NavLink> {/* <-- About Us properly linked */}
             </div>
           </div>
 
+          {/* Right side - Auth Buttons */}
           <div className="flex items-center space-x-4">
             {isLoggedIn ? (
               <>
@@ -70,6 +74,7 @@ export function Navbar() {
               </>
             )}
           </div>
+
         </div>
       </div>
     </nav>
