@@ -7,6 +7,7 @@ const authRoutes = require("./routes/authRoutes");
 const riskRoutes = require("./routes/riskRoutes");
 const newsRoutes = require("./routes/newsRoutes");
 const marketRoutes = require("./routes/marketRoutes");
+const marketDataRoutes = require("./routes/marketDataRoutes"); // Add this line
 const predictionRoutes = require("./routes/predictionRoutes");
 
 const app = express();
@@ -17,9 +18,10 @@ app.use(express.json());
 // CORS configuration (adjust based on your frontend port)
 app.use(
   cors({
-    origin: "http://localhost:5001",  // React frontend URL
+    origin: "http://localhost:5001", // React frontend URL
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type"],
+    allowedHeaders: ["Content-Type", "Authorization"], // Add Authorization here
+    credentials: true // Add this if you're using cookies
   })
 );
 
@@ -31,13 +33,14 @@ app.use("/api/auth", authRoutes);
 app.use("/api/risk", riskRoutes);
 app.use("/api/news", newsRoutes);
 app.use("/api/market", marketRoutes);
+app.use("/api/market-data", marketDataRoutes); // Add this line
 app.use("/api/predict", predictionRoutes);
 
 // Example of getting current user (authentication should be handled properly)
 app.get("/api/auth/current-user", (req, res) => {
   const user = req.user; // Assuming user info is attached to the request (JWT or session)
   if (user) {
-    res.json(user);  // If user exists, return user data
+    res.json(user); // If user exists, return user data
   } else {
     res.status(404).json({ message: "User not found" });
   }
