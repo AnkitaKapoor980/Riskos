@@ -4,9 +4,7 @@ import "react-responsive-carousel/lib/styles/carousel.min.css";
 import { Link } from "react-router-dom";
 import Img1 from '../assets/img1.jpg';
 import Img2 from '../assets/img2.jpg';
-import Img3 from "../assets/img3.png";
-import Img4 from "../assets/land2.png";
-import Img5 from "../assets/land1.png";
+import Img3 from '../assets/img3.jpg';
 
 
 function LandingPage() {
@@ -53,47 +51,35 @@ function LandingPage() {
       </section>
 
       {/* Info Section */}
-      <section className="w-11/12 max-w-6xl mx-auto mt-16 grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+      <section className="w-11/12 max-w-6xl mx-auto mt-16 grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 leading-tight">
-            Make Investments Easy.<br />Smarter, Faster, Better.
+          <h1 className="text-lg font-bold">
+            Making investements easy<br />Easier and Smarter.
           </h1>
-          <p className="mt-4 text-md text-gray-600">
-            Access real-time stock price data of all Nifty-50 listed companies at your fingertips.
+          <p className="mt-2 text-sm text-gray-700">
+            Consist real-time stock price data of all the Nifty-50 listed companies.
           </p>
-          <Link to="/learn">
-            <button className="mt-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg transition duration-300">
-              Learn More ➜
-            </button>
-          </Link> 
+          <button className="mt-4 bg-gray-200 text-sm px-4 py-2 rounded border">Learn More ➜</button>
         </div>
-        <div className="flex justify-center">
-          <img src={Img5} alt="Stock Market" className="h-120 object-contain mx-auto" />
+        <div className="bg-gray-300 h-48 flex items-center justify-center">
+          <span className="text-gray-600">Image</span>
         </div>
       </section>
 
       {/* Signup Section */}
-      <section className="w-full mt-20 bg-teal-200 py-16">
-        <div className="w-11/12 max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 items-center gap-10">
-          <div className="flex justify-center">
-            <img src= {Img4} alt="Free Signup" className="h-80 object-contain mx-auto" />
-          </div>
-          <div>
-            <h3 className="text-2xl font-bold text-gray-900">
-              No fuss. Free Sign Up.<br />No credit card needed.
-            </h3>
-            <p className="mt-4 text-md text-gray-600">
-              Get started for free and explore our real-time investment insights without any commitment.
-            </p>
-            <Link to="/signup">
-              <button className="mt-6 bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3 rounded-lg transition duration-300">
-                Sign up for free ➜
-              </button>
-            </Link>
-          </div>
+      <section className="w-full mt-16 grid grid-cols-1 md:grid-cols-2">
+        <div className="bg-gray-400 h-64 flex items-center justify-center">
+          <span className="text-gray-700">Image</span>
+        </div>
+        <div className="bg-teal-900 text-white p-6 flex flex-col justify-center">
+          <h3 className="text-lg font-bold">No fuss, free sign up.<br />No credit card needed</h3>
+          <p className="mt-2 text-sm">
+            The only way to see performance is to see it in its context.
+          </p>
+          <button className="mt-4 bg-white text-black text-sm px-4 py-2 rounded">Sign up for free ➜</button>
         </div>
       </section>
-
+      
     </div>
   );
 }

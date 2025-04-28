@@ -5,13 +5,13 @@ import Img3 from "../assets/stock.png";
 
 const cards = [
   {
-    title: "VAR",
+    title: "VaR",
     detailedDesc: "Value at Risk (VaR) is a widely used measure to estimate the potential loss in the value of a stock or portfolio over a specific time period, under normal market conditions, at a given confidence level. For example, a one-day VaR of $1 million at 95% confidence means there is a 5% chance the portfolio will lose more than $1 million in one day. It helps investors understand the worst expected loss without extreme events. VaR can be calculated using historical simulation, variance-covariance methods, or Monte Carlo simulations, making it crucial for managing financial risk.",
     bgColor: "bg-yellow-200",
     icon: Img1
   },
   {
-    title: "C-Var",
+    title: "C-VaR",
     detailedDesc: "Conditional Value at Risk (CVaR), also called Expected Shortfall, provides a deeper view beyond VaR by estimating the average losses that occur beyond the VaR threshold. While VaR tells you the worst expected loss at a confidence level, CVaR tells you how bad losses can get if that worst case is breached. It is especially useful in stock risk analysis because it captures tail risk — extreme losses that VaR might miss. CVaR is more sensitive to the shape of the loss distribution, making it a better risk management tool when dealing with portfolios exposed to large, rare losses.",
     bgColor: "bg-green-300",
     icon: Img2
@@ -44,11 +44,11 @@ const LearnMoreCards = () => {
           <div key={index} className="flex flex-col items-center">
             {/* Main Card */}
             <div
-              className={`w-64 rounded-md p-6 ${card.bgColor} flex flex-col items-center cursor-pointer transition-transform transform hover:scale-105`}
+              className={`w-80 rounded-md p-10 ${card.bgColor} flex flex-col items-center cursor-pointer transition-transform transform hover:scale-105`}
               onClick={() => toggleExpand(index)}
             >
               {/* Icon */}
-              <img src={card.icon} alt={card.title} className="w-16 h-16 mb-4" />
+              <img src={card.icon} alt={card.title} className="w-20 h-20 mb-4" />
               
               {/* Title */}
               <h2 className="text-2xl font-bold mb-2">{card.title}</h2>
@@ -62,8 +62,8 @@ const LearnMoreCards = () => {
 
             {/* Expanded Description */}
             {expandedCard === index && (
-              <div className="w-64 mt-2 bg-gray-100 p-4 rounded-md shadow-inner transition-all duration-300">
-                <p className="text-gray-700 text-sm">{card.detailedDesc}</p>
+              <div className="w-80 mt-2 bg-gray-100 p-6 rounded-md shadow-inner transition-all duration-300">
+                <p className="text-gray-700 text-4x1">{card.detailedDesc}</p>
               </div>
             )}
           </div>
