@@ -44,7 +44,7 @@ const LearnMoreCards = () => {
           <div key={index} className="flex flex-col items-center">
             {/* Main Card */}
             <div
-              className={`w-80 rounded-md p-10 ${card.bgColor} flex flex-col items-center cursor-pointer transition-transform transform hover:scale-105`}
+              className={`w-80 rounded-md p-20 ${card.bgColor} flex flex-col items-center cursor-pointer transition-transform transform hover:scale-105`}
               onClick={() => toggleExpand(index)}
             >
               {/* Icon */}
@@ -63,7 +63,7 @@ const LearnMoreCards = () => {
             {/* Expanded Description */}
             {expandedCard === index && (
               <div className="w-80 mt-2 bg-gray-100 p-6 rounded-md shadow-inner transition-all duration-300">
-                <p className="text-gray-700 text-4x1">{card.detailedDesc}</p>
+                <p className="text-gray-700 text-lg">{card.detailedDesc}</p>
               </div>
             )}
           </div>
