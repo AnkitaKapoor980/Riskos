@@ -8,7 +8,6 @@ from arch import arch_model
 from scipy import stats
 import warnings
 
-# Suppress warnings
 warnings.filterwarnings('ignore')
 
 def get_csv_file_mapping(folder_path):
@@ -20,49 +19,47 @@ def get_csv_file_mapping(folder_path):
     for file_name in os.listdir(folder_path):
         if file_name.endswith('.csv'):
             stock_symbol = file_name.split('_')[0]
-            file_mapping[stock_symbol] = os.path.join(folder_path, file_name)
+            file_mapping[stock_symbol.upper()] = os.path.join(folder_path, file_name)
     return file_mapping
 
 def calculate_var(returns, portfolio_value, confidence_level=0.95):
-    """Calculate Value at Risk (VaR)."""
+    if len(returns) == 0:
+        return 0
     var_threshold = np.percentile(returns, (1 - confidence_level) * 100)
     return round(var_threshold * portfolio_value, 2)
 
 def calculate_cvar(returns, portfolio_value, confidence_level=0.95):
-    """Calculate Conditional Value at Risk (CVaR)."""
+    if len(returns) == 0:
+        return 0
     var_threshold = np.percentile(returns, (1 - confidence_level) * 100)
     cvar = returns[returns <= var_threshold].mean()
     return round(cvar * portfolio_value, 2)
 
 def calculate_sharpe_ratio(returns, risk_free_rate=0.05):
-    """Calculate Sharpe Ratio."""
-    excess_returns = returns.mean() - (risk_free_rate / 252)
-    return round(excess_returns / returns.std(), 2)
+    if len(returns) == 0 or returns.std() == 0:
+        return 0
+    daily_risk_free_rate = risk_free_rate / 252
+    excess_daily_return = returns.mean() - daily_risk_free_rate
+    return round(excess_daily_return / returns.std(), 2)
 
-def calculate_max_drawdown(returns):
-    """Calculate Maximum Drawdown."""
-    cum_returns = (1 + returns / 100).cumprod()
-    running_max = cum_returns.cummax()
-    drawdown = (cum_returns - running_max) / running_max
-    return round(drawdown.min() * 100, 4)
+def calculate_max_drawdown(prices):
+    if len(prices) == 0:
+        return 0
+    cumulative_max = prices.cummax()
+    drawdown = (prices - cumulative_max) / cumulative_max
+    return round(drawdown.min() * 100, 2)
 
 def predict_portfolio_risk(stock_file_mapping, portfolio_stocks, forecast_days=30, confidence_level=0.95):
-    """Main prediction function."""
     stock_results = {}
     all_returns_data = {}
     stock_weights = {}
     portfolio_value = 0
-    total_profit_loss = 0
-    
-    # Create output directory
-    output_dir = "portfolio_analysis_outputs"
-    os.makedirs(output_dir, exist_ok=True)
+    total_investment = 0
 
-    # Load data and calculate metrics
     for symbol, details in portfolio_stocks.items():
         quantity = details['quantity']
         buy_price = details['buy_price']
-        
+
         if symbol not in stock_file_mapping:
             print(f"No data file found for {symbol}. Skipping...")
             continue
@@ -73,17 +70,17 @@ def predict_portfolio_risk(stock_file_mapping, portfolio_stocks, forecast_days=3
             stock_df.dropna(subset=['Close'], inplace=True)
 
             if stock_df.empty:
-                print(f"No data found for {symbol}. Skipping...")
+                print(f"No data for {symbol}. Skipping...")
                 continue
 
             current_price = stock_df['Close'].iloc[-1]
             position_value = current_price * quantity
-            portfolio_value += position_value
-            profit_loss = (current_price - buy_price) * quantity
-            total_profit_loss += profit_loss
+            investment_value = buy_price * quantity
 
-            stock_df['Returns'] = stock_df['Close'].pct_change() * 100
-            returns = stock_df['Returns'].dropna()
+            portfolio_value += position_value
+            total_investment += investment_value
+
+            returns = stock_df['Close'].pct_change().dropna()
             all_returns_data[symbol] = returns
             stock_weights[symbol] = position_value
 
@@ -91,98 +88,64 @@ def predict_portfolio_risk(stock_file_mapping, portfolio_stocks, forecast_days=3
             print(f"Error processing {symbol}: {str(e)}")
             continue
 
-    # Calculate weights
+    if portfolio_value == 0:
+        print("Portfolio value is zero. Exiting...")
+        return
+
+    # Normalize weights
     for symbol in stock_weights:
-        stock_weights[symbol] = stock_weights[symbol] / portfolio_value
+        stock_weights[symbol] /= portfolio_value
 
-    # Calculate metrics and forecasts
-    for symbol, details in portfolio_stocks.items():
-        if symbol not in all_returns_data:
-            continue
-
-        quantity = details['quantity']
-        buy_price = details['buy_price']
+    # Forecast and risk metrics
+    for symbol in all_returns_data.keys():
         returns = all_returns_data[symbol]
         position_value = stock_weights[symbol] * portfolio_value
 
         try:
-            # Forecast returns with ARIMA
             arima_model = ARIMA(returns, order=(1, 0, 1))
             arima_fit = arima_model.fit()
             forecast_returns = arima_fit.forecast(steps=forecast_days)
 
-            # Forecast volatility with GARCH
             garch_model = arch_model(returns, vol='Garch', p=1, q=1)
             garch_fit = garch_model.fit(disp='off')
-            forecast_result = garch_fit.forecast(horizon=forecast_days, reindex=False)
-            forecast_vol = np.sqrt(forecast_result.variance.values[-1, :])
+            forecast_vol = np.sqrt(garch_fit.forecast(horizon=forecast_days).variance.values[-1, :])
 
-            # Calculate risk metrics
             z_score = stats.norm.ppf(1 - confidence_level)
-            var_pct = forecast_returns.mean() + (z_score * forecast_vol.mean())
-            var_amount = position_value * (var_pct / 100)
-            
+            var_pct = forecast_returns.mean() + z_score * forecast_vol.mean()
+            var_amount = position_value * var_pct
+
             cvar_z = stats.norm.pdf(z_score) / (1 - confidence_level)
-            cvar_pct = forecast_returns.mean() + (forecast_vol.mean() * cvar_z)
-            cvar_amount = position_value * (cvar_pct / 100)
-            
-            sharpe_ratio = (forecast_returns.mean() - (0.05 / 252)) / forecast_vol.mean()
+            cvar_pct = forecast_returns.mean() + cvar_z * forecast_vol.mean()
+            cvar_amount = position_value * cvar_pct
 
             stock_results[symbol] = {
-                'quantity': quantity,
-                'current_price': current_price,
-                'buy_price': buy_price,
-                'position_value': position_value,
-                'weight': stock_weights[symbol],
-                'profit_loss': profit_loss,
-                'roi': (profit_loss / (buy_price * quantity)) * 100,
-                'var_amount': var_amount,
-                'cvar_amount': cvar_amount,
-                'sharpe_ratio': sharpe_ratio,
-                'max_drawdown': calculate_max_drawdown(returns),
-                'forecast_return': forecast_returns.mean(),
-                'forecast_volatility': forecast_vol.mean()
+                'forecast_return': round(forecast_returns.mean() * 100, 2),
+                'forecast_volatility': round(forecast_vol.mean() * 100, 2),
+                'VaR (₹)': round(var_amount, 2),
+                'CVaR (₹)': round(cvar_amount, 2),
+                'Sharpe Ratio': calculate_sharpe_ratio(forecast_returns),
             }
-
         except Exception as e:
-            print(f"Error processing forecasts for {symbol}: {str(e)}")
+            print(f"Forecast error for {symbol}: {str(e)}")
             continue
 
-    if stock_results:
-        # Portfolio metrics
-        portfolio_returns = pd.Series(0, index=returns.index)
-        for symbol, weight in stock_weights.items():
-            if symbol in all_returns_data:
-                portfolio_returns += all_returns_data[symbol] * weight
+    portfolio_returns = sum(all_returns_data[symbol] * weight for symbol, weight in stock_weights.items())
+    portfolio_var = calculate_var(portfolio_returns, portfolio_value, confidence_level)
+    portfolio_cvar = calculate_cvar(portfolio_returns, portfolio_value, confidence_level)
+    portfolio_sharpe = calculate_sharpe_ratio(portfolio_returns)
+    portfolio_drawdown = calculate_max_drawdown(portfolio_returns.cumsum())
 
-        portfolio_var = calculate_var(portfolio_returns, portfolio_value, confidence_level)
-        portfolio_cvar = calculate_cvar(portfolio_returns, portfolio_value, confidence_level)
-        portfolio_sharpe = calculate_sharpe_ratio(portfolio_returns)
-        portfolio_max_drawdown = calculate_max_drawdown(portfolio_returns)
+    output = {
+        "portfolio_summary": {
+            "Total Investment": f"₹{total_investment:,.2f}",
+            "Current Value": f"₹{portfolio_value:,.2f}",
+            "Total Return (%)": round(((portfolio_value - total_investment) / total_investment) * 100, 2),
+            "VaR (₹)": abs(portfolio_var),
+            "CVaR (₹)": abs(portfolio_cvar),
+            "Sharpe Ratio": portfolio_sharpe,
+            "Max Drawdown (%)": abs(portfolio_drawdown)
+        },
+        "individual_stocks": stock_results
+    }
 
-        output = {
-            "portfolio_summary": {
-                "Total Portfolio Value": f"₹{portfolio_value:,.2f}",
-                "Total Profit/Loss": f"₹{total_profit_loss:,.2f}",
-                "Portfolio Return": f"{(total_profit_loss / portfolio_value) * 100:.2f}%",
-                "Value at Risk (VaR)": f"₹{abs(portfolio_var):,.2f}",
-                "Conditional VaR (CVaR)": f"₹{abs(portfolio_cvar):,.2f}",
-                "Sharpe Ratio": round(portfolio_sharpe, 2),
-                "Maximum Drawdown": f"{abs(portfolio_max_drawdown):.2f}%",
-                "Risk Level": "High" if portfolio_sharpe < 0.5 else "Moderate" if portfolio_sharpe < 1 else "Low",
-                "Recommendation": "Hold" if portfolio_sharpe > 1 else "Consider rebalancing"
-            },
-            "individual_stocks": stock_results
-        }
-        print(json.dumps(output, indent=4))
-
-# Example Usage
-# Replace with your actual folder path and portfolio details
-folder_path = "F:\Capstone 1\Riskos\backend\flask-api\Scripts"
-portfolio_stocks = {
-    "AAPL": {"quantity": 10, "buy_price": 150},
-    "GOOGL": {"quantity": 5, "buy_price": 2800},
-    "MSFT": {"quantity": 8, "buy_price": 300}
-}
-stock_file_mapping = get_csv_file_mapping(folder_path)
-predict_portfolio_risk(stock_file_mapping, portfolio_stocks)
+    print(json.dumps(output, indent=4))
