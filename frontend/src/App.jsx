@@ -1,7 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { StockMarketNews } from './pages/StockMarketNews';
-import { LiveMarketData } from './pages/LiveMarketData';
 import { LandingPage } from './pages/LandingPage';
 import { PortfolioDashboard } from './pages/PortfolioDashboard';
 import { RiskAnalysisPage } from './pages/RiskAnalysis';
@@ -24,7 +23,6 @@ function App() {
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/news" element={<StockMarketNews />} />
-              <Route path="/market-data" element={<LiveMarketData />} />
               <Route path="/portfolio" element={<PortfolioDashboard />} />
               <Route path="/assessment" element={<Assessment />} />
               <Route path="/risk-prediction" element={<RiskAnalysisPage />} />
