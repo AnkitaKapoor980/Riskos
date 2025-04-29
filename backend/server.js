@@ -8,6 +8,7 @@ const riskRoutes = require("./routes/riskRoutes");
 const newsRoutes = require("./routes/newsRoutes");
 const marketRoutes = require("./routes/marketRoutes");
 const predictionRoutes = require("./routes/predictionRoutes");
+const portfolioRoutes = require('./routes/portfolioRoutes');
 
 const app = express();
 
@@ -32,6 +33,7 @@ app.use("/api/risk", riskRoutes);
 app.use("/api/news", newsRoutes);
 app.use("/api/market", marketRoutes);
 app.use("/api/predict", predictionRoutes);
+app.use('/api/portfolios', portfolioRoutes);
 
 // Example of getting current user (authentication should be handled properly)
 app.get("/api/auth/current-user", (req, res) => {
