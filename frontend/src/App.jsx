@@ -3,7 +3,6 @@ import { Navbar } from './components/Navbar';
 import { StockMarketNews } from './pages/StockMarketNews';
 import { LandingPage } from './pages/LandingPage';
 import { PortfolioDashboard } from './pages/PortfolioDashboard';
-import { RiskAnalysisPage } from './pages/RiskAnalysis';
 import { Assessment } from './pages/Assessment';
 import { LoginPage } from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
@@ -25,7 +24,6 @@ function App() {
               <Route path="/news" element={<StockMarketNews />} />
               <Route path="/portfolio" element={<PortfolioDashboard />} />
               <Route path="/assessment" element={<Assessment />} />
-              <Route path="/risk-prediction" element={<RiskAnalysisPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
               <Route path="/learn" element={ <Learn />} />

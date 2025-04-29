@@ -1,176 +1,166 @@
-import React, { useState } from 'react';
-import axios from 'axios';
-import StockTooltip from '../components/StockTooltip';
-
+import React, { useState } from "react";
+import axios from "axios";
+import { FaPlusCircle, FaMinusCircle } from "react-icons/fa";
 
 const Assessment = () => {
-  const [stocks, setStocks] = useState([{ name: '', quantity: '', buyPrice: '' }]);
+  const [stockData, setStockData] = useState([{ stockName: "", quantity: "", buyPrice: "" }]);
   const [confidenceLevel, setConfidenceLevel] = useState(95);
-  const [results, setResults] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [forecastDays, setForecastDays] = useState(30);
+  const [activeMode, setActiveMode] = useState("calculate");
+  const [result, setResult] = useState(null);
 
-  const handleStockChange = (index, field, value) => {
-    const updatedStocks = [...stocks];
-    updatedStocks[index][field] = value;
-    setStocks(updatedStocks);
+  const handleAddStock = () => {
+    setStockData([...stockData, { stockName: "", quantity: "", buyPrice: "" }]);
   };
 
-  const addStock = () => {
-    setStocks([...stocks, { name: '', quantity: '', buyPrice: '' }]);
+  const handleRemoveStock = (index) => {
+    const currentRow = stockData[index];
+    const isFilled = currentRow.stockName || currentRow.quantity || currentRow.buyPrice;
+    if (isFilled && !window.confirm("This row has data. Delete it?")) return;
+    const updated = [...stockData];
+    updated.splice(index, 1);
+    setStockData(updated);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setResults(null);
+  const handleChange = (index, field, value) => {
+    const updated = [...stockData];
+    updated[index][field] = value;
+    setStockData(updated);
+  };
 
+  const handleSubmit = async () => {
+    const payload = {
+      portfolio: stockData,
+      confidenceLevel,
+      ...(activeMode === "forecast" && { forecastDays }),
+    };
     try {
-      const payload = {
-        portfolio: stocks.map((s) => ({
-          symbol: s.name.trim().toUpperCase() + '.NS',
-          quantity: Number(s.quantity),
-          buy_price: Number(s.buyPrice)
-        })),
-        confidence_level: Number(confidenceLevel)
-      };
-
-      const response = await axios.post('http://localhost:5000/api/risk/calculate', payload);
-      setResults(response.data);
+      const response = await axios.post(
+        `http://localhost:5000/api/${activeMode === "forecast" ? "predict/analyze" : "risk/calculate"}`,
+        payload
+      );
+      setResult(response.data);
     } catch (error) {
-      console.error('Error calculating risk:', error);
-      alert('Something went wrong while calculating risk. Check backend logs.');
-    } finally {
-      setLoading(false);
+      console.error("Error calculating risk:", error);
     }
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-6">
-      <h2 className="text-3xl font-bold mb-6 text-center">Risk Assessment</h2>
+    <div className="max-w-5xl mx-auto p-6 space-y-6">
+      <h1 className="text-3xl font-bold">📈 Portfolio Risk Analysis</h1>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {stocks.map((stock, index) => (
-          <div key={index} className="flex flex-wrap gap-4 items-end border p-4 rounded-lg shadow-sm bg-white">
-            <div className="flex-1">
-              <label className="block mb-1 font-medium">Stock Symbol</label>
-              <input
-                type="text"
-                value={stock.name}
-                onChange={(e) => handleStockChange(index, 'name', e.target.value)}
-                className="w-full border px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="e.g., RELIANCE"
-                required
-              />
-            </div>
-            <div className="flex-1">
-              <label className="block mb-1 font-medium">Quantity</label>
-              <input
-                type="number"
-                value={stock.quantity}
-                onChange={(e) => handleStockChange(index, 'quantity', e.target.value)}
-                className="w-full border px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-            <div className="flex-1">
-              <label className="block mb-1 font-medium">Buy Price (₹)</label>
-              <input
-                type="number"
-                value={stock.buyPrice}
-                onChange={(e) => handleStockChange(index, 'buyPrice', e.target.value)}
-                className="w-full border px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-          </div>
-        ))}
+      <h2 className="text-xl font-semibold">Input Portfolio Details</h2>
 
-        <div className="flex items-center gap-4">
-          <button
-            type="button"
-            onClick={addStock}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-          >
-            + Add Stock
-          </button>
+      <table className="w-full border rounded">
+        <thead className="bg-gray-100">
+          <tr>
+            <th className="p-2 text-left">Stock Name</th>
+            <th className="p-2 text-left">Quantity</th>
+            <th className="p-2 text-left">Buy Price (₹)</th>
+            <th className="p-2 text-left">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {stockData.map((stock, index) => (
+            <tr key={index} className="border-t">
+              <td className="p-2">
+                <input
+                  type="text"
+                  value={stock.stockName}
+                  onChange={(e) => handleChange(index, "stockName", e.target.value)}
+                  placeholder="e.g. RELIANCE"
+                  className="w-full border rounded px-2 py-1"
+                />
+              </td>
+              <td className="p-2">
+                <input
+                  type="number"
+                  value={stock.quantity}
+                  onChange={(e) => handleChange(index, "quantity", e.target.value)}
+                  placeholder="e.g. 10"
+                  className="w-full border rounded px-2 py-1"
+                />
+              </td>
+              <td className="p-2">
+                <input
+                  type="number"
+                  value={stock.buyPrice}
+                  onChange={(e) => handleChange(index, "buyPrice", e.target.value)}
+                  placeholder="e.g. 2500"
+                  className="w-full border rounded px-2 py-1"
+                />
+              </td>
+              <td className="p-2 flex gap-2 items-center">
+                {stockData.length > 1 && (
+                  <FaMinusCircle
+                    className="text-red-500 cursor-pointer"
+                    onClick={() => handleRemoveStock(index)}
+                  />
+                )}
+                {index === stockData.length - 1 && (
+                  <FaPlusCircle
+                    className="text-green-500 cursor-pointer"
+                    onClick={handleAddStock}
+                  />
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
 
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <label className="block mb-1 font-medium">Confidence Level (%)</label>
+          <input
+            type="number"
+            value={confidenceLevel}
+            onChange={(e) => setConfidenceLevel(e.target.value)}
+            placeholder="e.g. 95"
+            className="w-full border rounded px-2 py-1"
+          />
+        </div>
+
+        {activeMode === "forecast" && (
           <div>
-            <label className="block mb-1 font-medium">Confidence Level (%)</label>
+            <label className="block mb-1 font-medium">Forecast Days</label>
             <input
               type="number"
-              value={confidenceLevel}
-              onChange={(e) => setConfidenceLevel(e.target.value)}
-              min={80}
-              max={99}
-              className="border px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
+              value={forecastDays}
+              onChange={(e) => setForecastDays(e.target.value)}
+              placeholder="e.g. 30"
+              className="w-full border rounded px-2 py-1"
             />
           </div>
+        )}
 
+        <div className="flex items-end gap-2">
           <button
-            type="submit"
-            className="ml-auto px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            onClick={() => setActiveMode("calculate")}
+            className={`px-4 py-2 rounded ${activeMode === "calculate" ? "bg-blue-600 text-white" : "border"}`}
           >
-            {loading ? 'Calculating...' : 'Calculate Risk'}
+            Calculate Current Risk
+          </button>
+          <button
+            onClick={() => setActiveMode("forecast")}
+            className={`px-4 py-2 rounded ${activeMode === "forecast" ? "bg-purple-600 text-white" : "border"}`}
+          >
+            Forecast Future Risk
           </button>
         </div>
-      </form>
+      </div>
 
-      {results && (
-        <div className="mt-10 space-y-8">
-          <div className="bg-gray-100 p-6 rounded-xl shadow">
-            <h3 className="text-xl font-semibold mb-4 text-gray-800">🧾 Portfolio Summary</h3>
-            <ul className="list-disc ml-6 text-gray-700">
-              {stocks.map((s, idx) => (
-                <li key={idx}>
-                  <strong>{s.name.toUpperCase()}</strong>: {s.quantity} shares @ ₹{s.buyPrice}
-                    {results.individual_stocks[s.name.toUpperCase() + '.NS'] && (
-                    <StockTooltip
-                        symbol={s.name.toUpperCase()}
-                        metrics={results.individual_stocks[s.name.toUpperCase() + '.NS']}
-                    />
-                    )}
-                </li>
-              ))}
-            </ul>
-            <p className="mt-4 text-gray-600">Confidence Level: <strong>{confidenceLevel}%</strong></p>
-          </div>
+      <button
+        onClick={handleSubmit}
+        className="mt-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+      >
+        Submit
+      </button>
 
-          <div className="bg-white p-6 rounded-xl shadow border">
-            <h3 className="text-xl font-semibold mb-4 text-gray-800">📊 Risk Metrics</h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-6 text-gray-700">
-              <div className="p-4 bg-blue-50 rounded-lg">
-                <p className="text-sm text-gray-500">Value at Risk (VaR)</p>
-                <p className="text-xl font-bold text-blue-700">
-                  ₹{results.portfolio_summary["VaR (₹)"].toFixed(2)}
-                </p>
-              </div>
-              <div className="p-4 bg-red-50 rounded-lg">
-                <p className="text-sm text-gray-500">Conditional VaR (CVaR)</p>
-                <p className="text-xl font-bold text-red-700">
-                  ₹{results.portfolio_summary["CVaR (₹)"].toFixed(2)}
-                </p>
-              </div>
-              <div className="p-4 bg-green-50 rounded-lg">
-                <p className="text-sm text-gray-500">Sharpe Ratio</p>
-                <p className="text-xl font-bold text-green-700">
-                  {results.portfolio_summary["Sharpe Ratio"].toFixed(2)}
-                </p>
-              </div>
-              <div className="p-4 bg-yellow-50 rounded-lg">
-                <p className="text-sm text-gray-500">Max Drawdown</p>
-                <p className="text-xl font-bold text-yellow-700">
-                  {(results.portfolio_summary["Max Drawdown"] * 100).toFixed(2)}%
-                </p>
-              </div>
-              <div className="p-4 bg-purple-50 rounded-lg col-span-2">
-                <p className="text-sm text-gray-500">Total Portfolio Value</p>
-                <p className="text-xl font-bold text-purple-700">
-                  ₹{results.portfolio_summary["Total Portfolio Value (₹)"].toFixed(2)}
-                </p>
-              </div>
-            </div>
-          </div>
+      {result && (
+        <div className="mt-6 bg-gray-100 p-4 rounded border">
+          <h2 className="text-lg font-semibold mb-2">📊 Results</h2>
+          <pre className="whitespace-pre-wrap text-sm">{JSON.stringify(result, null, 2)}</pre>
         </div>
       )}
     </div>
