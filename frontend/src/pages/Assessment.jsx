@@ -1,14 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import axios from 'axios';
 import StockTooltip from '../components/StockTooltip';
+import { useNavigate } from 'react-router-dom';
+import { AuthContext } from '../context/AuthContext'; // Adjust path if needed
 
 const Assessment = () => {
   const [stocks, setStocks] = useState([{ name: '', quantity: '', buyPrice: '' }]);
   const [confidenceLevel, setConfidenceLevel] = useState(95);
   const [forecastDays, setForecastDays] = useState(30);
-  const [riskType, setRiskType] = useState(''); // "current" or "forecast"
+  const [riskType, setRiskType] = useState('');
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  const navigate = useNavigate();
+  const { isLoggedIn } = useContext(AuthContext);
 
   const handleStockChange = (index, field, value) => {
     const updatedStocks = [...stocks];
@@ -22,18 +27,24 @@ const Assessment = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!isLoggedIn) {
+      alert("Please sign up or log in to submit your portfolio");
+      navigate("/signup");
+      return;
+    }
+
     setLoading(true);
-    setResults(null);
 
     try {
       const payload = {
         portfolio: stocks.map((s) => ({
           symbol: s.name.trim().toUpperCase() + '.NS',
-          quantity: Number(s.quantity),
-          buy_price: Number(s.buyPrice)
+          quantity: parseInt(s.quantity),
+          buy_price: parseFloat(s.buyPrice)
         })),
-        confidence_level: Number(confidenceLevel),
-        forecast_days: riskType === 'forecast' ? Number(forecastDays) : null,
+        confidence_level: parseFloat(confidenceLevel),
+        forecast_days: riskType === 'forecast' ? parseInt(forecastDays) : null,
         risk_type: riskType
       };
 
@@ -52,7 +63,6 @@ const Assessment = () => {
       <h2 className="text-3xl font-bold mb-6 text-center">Portfolio Risk Analyzer</h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Table to Add Stock Details */}
         <div className="overflow-x-auto border rounded-lg shadow-sm bg-white">
           <table className="min-w-full table-auto">
             <thead>
@@ -166,17 +176,20 @@ const Assessment = () => {
           <div className="bg-gray-100 p-6 rounded-xl shadow">
             <h3 className="text-xl font-semibold mb-4 text-gray-800">🧾 Portfolio Summary</h3>
             <ul className="list-disc ml-6 text-gray-700">
-              {stocks.map((s, idx) => (
-                <li key={idx}>
-                  <strong>{s.name.toUpperCase()}</strong>: {s.quantity} shares @ ₹{s.buyPrice}
-                    {results.individual_stocks[s.name.toUpperCase() + '.NS'] && (
-                    <StockTooltip
+              {stocks.map((s, idx) => {
+                const symbol = s.name.toUpperCase() + '.NS';
+                return (
+                  <li key={idx}>
+                    <strong>{s.name.toUpperCase()}</strong>: {s.quantity} shares @ ₹{s.buyPrice}
+                    {results.individual_stocks[symbol] && (
+                      <StockTooltip
                         symbol={s.name.toUpperCase()}
-                        metrics={results.individual_stocks[s.name.toUpperCase() + '.NS']}
-                    />
+                        metrics={results.individual_stocks[symbol]}
+                      />
                     )}
-                </li>
-              ))}
+                  </li>
+                );
+              })}
             </ul>
             <p className="mt-4 text-gray-600">Confidence Level: <strong>{confidenceLevel}%</strong></p>
           </div>

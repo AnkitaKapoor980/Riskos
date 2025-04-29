@@ -1,22 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 
-export default function PortfolioTable() {
-  const [holdings, setHoldings] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Simulating fetching data
-    setTimeout(() => {
-      setHoldings([
-        { symbol: 'AAPL', price: 145, buyPrice: 130, quantity: 10 },
-        { symbol: 'GOOG', price: 2750, buyPrice: 2500, quantity: 5 },
-      ]);
-      setLoading(false);
-    }, 2000);
-  }, []);
-
-  if (loading) {
-    return <div>Loading...</div>;
+export default function PortfolioTable({ holdings = [] }) {
+  if (holdings.length === 0) {
+    return <div>No Holdings Yet</div>;
   }
 
   const totalValue = holdings.reduce((sum, stock) => sum + (stock.price * stock.quantity), 0);
