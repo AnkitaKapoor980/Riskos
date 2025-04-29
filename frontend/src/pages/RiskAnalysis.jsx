@@ -51,8 +51,8 @@ const RiskAnalysisPage = () => {
 
   return (
     <Container maxWidth="md" sx={{ mt: 5 }}>
-      <Typography variant="h3" align="center" gutterBottom>
-        Risk Prediction
+      <Typography variant="h4" align="center" gutterBottom>
+        Risk Assessment
       </Typography>
 
       {error && (
@@ -67,7 +67,7 @@ const RiskAnalysisPage = () => {
           <Grid item xs={12} sm={4}>
             <TextField
               fullWidth
-              label="Stock Name"
+              label="Stock Symbol"
               placeholder="e.g., RELIANCE"
               value={newStock.symbol}
               onChange={(e) => setNewStock({ ...newStock, symbol: e.target.value })}
