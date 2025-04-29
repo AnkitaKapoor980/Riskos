@@ -1,32 +1,19 @@
-version: '3.8'
+version: '3'
 
 services:
   backend:
     build:
       context: .
       dockerfile: backend.Dockerfile
-    container_name: riskos-backend
     ports:
-      - "5000:5000"
-    env_file:
-      - ./backend/.env
+      - "5000:5000"  # Node.js API
+      - "5001:5001"  # Flask API
+    environment:
+      - NODE_ENV=production
+      - MONGO_URI=${MONGO_URI}
     volumes:
-      - ./backend:/app/backend
-      - /app/backend/node_modules
-    depends_on:
-      - mongodb
-    networks:
-      - riskos-network
-
-  flask-api:
-    build:
-      context: .
-      dockerfile: flask.Dockerfile
-    container_name: riskos-flask
-    ports:
-      - "5001:5001"
-    volumes:
-      - ./backend/flask-api:/app/flask-api
+      - ./backend:/app
+    restart: unless-stopped
     networks:
       - riskos-network
 
@@ -34,28 +21,14 @@ services:
     build:
       context: .
       dockerfile: frontend.Dockerfile
-    container_name: riskos-frontend
     ports:
       - "80:80"
     depends_on:
       - backend
-      - flask-api
-    networks:
-      - riskos-network
-
-  mongodb:
-    image: mongo:latest
-    container_name: riskos-mongodb
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongodb_data:/data/db
+    restart: unless-stopped
     networks:
       - riskos-network
 
 networks:
   riskos-network:
     driver: bridge
-
-volumes:
-  mongodb_data:

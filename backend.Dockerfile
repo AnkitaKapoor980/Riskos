@@ -1,15 +1,24 @@
-FROM node:18-alpine
+FROM node:18 AS node-base
+WORKDIR /app
 
-WORKDIR /app/backend
+# Install Python for the Flask API
+FROM node-base AS backend
+RUN apt-get update && apt-get install -y python3 python3-pip
 
-# Copy package files and install dependencies
+# Copy and install Node.js dependencies
 COPY backend/package*.json ./
 RUN npm install
 
-# Copy backend source code
-COPY backend ./
+# Copy and install Python requirements
+COPY backend/flask-api/requirements.txt ./flask-api/
+RUN pip3 install -r ./flask-api/requirements.txt
 
-# Expose the port your backend runs on
+# Copy the rest of the backend code
+COPY backend/ ./
+
+# Expose ports for Node.js and Flask
 EXPOSE 5000
+EXPOSE 5001
 
-CMD ["node", "server.js"]
+# Start both servers (Node.js and Flask)
+CMD ["sh", "-c", "python3 flask-api/app.py & npm start"]
