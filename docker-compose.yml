@@ -1,0 +1,31 @@
+version: '3'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend.Dockerfile
+    ports:
+      - "5000:5000"  # Node.js API
+      - "5001:5001"  # Flask API 
+    environment:
+      - NODE_ENV=production
+      # MongoDB URI is passed from Jenkins or can be set directly here for your presentation
+      - MONGO_URI=${MONGO_URI:-mongodb://localhost:27017/riskos}
+    networks:
+      - riskos-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend.Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - riskos-network
+
+networks:
+  riskos-network:
+    driver: bridge

@@ -1,19 +1,52 @@
-import { useState } from "react";
-import PortfolioChart from '../components/PortfolioChart';
-import PortfolioTable from '../components/PortfolioTable';
+import { useState, useEffect } from "react";
+import axios from "axios";
+import PortfolioChart from "../components/PortfolioChart";
+import PortfolioTable from "../components/PortfolioTable";
 import StockSearch from "../components/StockSearch";
 
 export function PortfolioDashboard() {
   const [portfolio, setPortfolio] = useState([]);
 
-  const handleAddStock = (stock) => {
+  // Function to fetch portfolio from backend
+  const fetchPortfolio = async () => {
+    try {
+      const token = localStorage.getItem("token"); // Assuming you store token in localStorage
+      const response = await axios.get("/api/portfolio", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setPortfolio(response.data);
+    } catch (error) {
+      console.error("Failed to fetch portfolio:", error);
+    }
+  };
+
+  // Fetch portfolio on page load
+  useEffect(() => {
+    fetchPortfolio();
+  }, []);
+
+  const handleAddStock = async (stock) => {
     const quantity = parseFloat(prompt(`Enter quantity for ${stock.symbol}`));
     const buyPrice = parseFloat(prompt(`Enter buy price for ${stock.symbol}`));
     if (!quantity || !buyPrice) return;
 
-    setPortfolio((prev) => [...prev, 
-      { ...stock, quantity, buyPrice }
-    ]);
+    const newStock = { ...stock, quantity, buyPrice };
+
+    try {
+      const token = localStorage.getItem("token");
+      await axios.post("/api/portfolio", newStock, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      // Update local state after successful POST
+      setPortfolio((prev) => [...prev, newStock]);
+    } catch (error) {
+      console.error("Failed to add stock:", error);
+    }
   };
 
   return (
