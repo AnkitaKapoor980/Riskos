@@ -2,11 +2,10 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import StockTooltip from '../components/StockTooltip';
 
+
 const Assessment = () => {
   const [stocks, setStocks] = useState([{ name: '', quantity: '', buyPrice: '' }]);
   const [confidenceLevel, setConfidenceLevel] = useState(95);
-  const [forecastDays, setForecastDays] = useState(30);
-  const [riskType, setRiskType] = useState(''); // "current" or "forecast"
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -32,9 +31,7 @@ const Assessment = () => {
           quantity: Number(s.quantity),
           buy_price: Number(s.buyPrice)
         })),
-        confidence_level: Number(confidenceLevel),
-        forecast_days: riskType === 'forecast' ? Number(forecastDays) : null,
-        risk_type: riskType
+        confidence_level: Number(confidenceLevel)
       };
 
       const response = await axios.post('http://localhost:5000/api/risk/calculate', payload);
@@ -49,57 +46,46 @@ const Assessment = () => {
 
   return (
     <div className="max-w-5xl mx-auto p-6">
-      <h2 className="text-3xl font-bold mb-6 text-center">Portfolio Risk Analyzer</h2>
+      <h2 className="text-3xl font-bold mb-6 text-center">Risk Assessment</h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Table to Add Stock Details */}
-        <div className="overflow-x-auto border rounded-lg shadow-sm bg-white">
-          <table className="min-w-full table-auto">
-            <thead>
-              <tr className="bg-gray-200">
-                <th className="px-4 py-2 text-left">Stock Name</th>
-                <th className="px-4 py-2 text-left">Quantity</th>
-                <th className="px-4 py-2 text-left">Buy Price (₹)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {stocks.map((stock, index) => (
-                <tr key={index}>
-                  <td className="border-t px-4 py-2">
-                    <input
-                      type="text"
-                      value={stock.name}
-                      onChange={(e) => handleStockChange(index, 'name', e.target.value)}
-                      className="w-full border px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="e.g., RELIANCE"
-                      required
-                    />
-                  </td>
-                  <td className="border-t px-4 py-2">
-                    <input
-                      type="number"
-                      value={stock.quantity}
-                      onChange={(e) => handleStockChange(index, 'quantity', e.target.value)}
-                      className="w-full border px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                    />
-                  </td>
-                  <td className="border-t px-4 py-2">
-                    <input
-                      type="number"
-                      value={stock.buyPrice}
-                      onChange={(e) => handleStockChange(index, 'buyPrice', e.target.value)}
-                      className="w-full border px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        {stocks.map((stock, index) => (
+          <div key={index} className="flex flex-wrap gap-4 items-end border p-4 rounded-lg shadow-sm bg-white">
+            <div className="flex-1">
+              <label className="block mb-1 font-medium">Stock Symbol</label>
+              <input
+                type="text"
+                value={stock.name}
+                onChange={(e) => handleStockChange(index, 'name', e.target.value)}
+                className="w-full border px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="e.g., RELIANCE"
+                required
+              />
+            </div>
+            <div className="flex-1">
+              <label className="block mb-1 font-medium">Quantity</label>
+              <input
+                type="number"
+                value={stock.quantity}
+                onChange={(e) => handleStockChange(index, 'quantity', e.target.value)}
+                className="w-full border px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            <div className="flex-1">
+              <label className="block mb-1 font-medium">Buy Price (₹)</label>
+              <input
+                type="number"
+                value={stock.buyPrice}
+                onChange={(e) => handleStockChange(index, 'buyPrice', e.target.value)}
+                className="w-full border px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+          </div>
+        ))}
 
-        <div className="flex items-center gap-4 mt-4">
+        <div className="flex items-center gap-4">
           <button
             type="button"
             onClick={addStock}
@@ -121,42 +107,11 @@ const Assessment = () => {
             />
           </div>
 
-          {riskType === 'forecast' && (
-            <div>
-              <label className="block mb-1 font-medium">Forecast Days</label>
-              <input
-                type="number"
-                value={forecastDays}
-                onChange={(e) => setForecastDays(e.target.value)}
-                className="border px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-          )}
-        </div>
-
-        <div className="flex items-center gap-4 mt-4">
-          <button
-            type="button"
-            onClick={() => setRiskType('current')}
-            className={`px-6 py-2 ${riskType === 'current' ? 'bg-blue-700' : 'bg-blue-600'} text-white rounded-lg hover:bg-blue-700`}
-          >
-            📊 Calculate Current Risk
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setRiskType('forecast')}
-            className={`px-6 py-2 ${riskType === 'forecast' ? 'bg-purple-700' : 'bg-purple-600'} text-white rounded-lg hover:bg-purple-700`}
-          >
-            🔮 Forecast Future Risk
-          </button>
-
           <button
             type="submit"
             className="ml-auto px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
-            {loading ? 'Calculating...' : 'Submit'}
+            {loading ? 'Calculating...' : 'Calculate Risk'}
           </button>
         </div>
       </form>
