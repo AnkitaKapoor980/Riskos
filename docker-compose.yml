@@ -7,13 +7,11 @@ services:
       dockerfile: backend.Dockerfile
     ports:
       - "5000:5000"  # Node.js API
-      - "5001:5001"  # Flask API
+      - "5001:5001"  # Flask API 
     environment:
       - NODE_ENV=production
-      - MONGO_URI=${MONGO_URI}
-    volumes:
-      - ./backend:/app
-    restart: unless-stopped
+      # MongoDB URI is passed from Jenkins or can be set directly here for your presentation
+      - MONGO_URI=${MONGO_URI:-mongodb://localhost:27017/riskos}
     networks:
       - riskos-network
 
@@ -25,7 +23,6 @@ services:
       - "80:80"
     depends_on:
       - backend
-    restart: unless-stopped
     networks:
       - riskos-network
 

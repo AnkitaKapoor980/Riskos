@@ -1,17 +1,22 @@
-FROM node:18 AS node-base
+FROM node:18-bullseye
+
 WORKDIR /app
 
-# Install Python for the Flask API
-FROM node-base AS backend
-RUN apt-get update && apt-get install -y python3 python3-pip
+# Install Python and create a virtual environment
+RUN apt-get update && apt-get install -y python3 python3-pip python3-venv
+
+# Create a virtual environment
+RUN python3 -m venv /opt/venv
+# Activate the virtual environment in all commands
+ENV PATH="/opt/venv/bin:$PATH"
 
 # Copy and install Node.js dependencies
 COPY backend/package*.json ./
 RUN npm install
 
-# Copy and install Python requirements
+# Copy and install Python requirements in the virtual environment
 COPY backend/flask-api/requirements.txt ./flask-api/
-RUN pip3 install -r ./flask-api/requirements.txt
+RUN pip install --no-cache-dir -r ./flask-api/requirements.txt
 
 # Copy the rest of the backend code
 COPY backend/ ./
