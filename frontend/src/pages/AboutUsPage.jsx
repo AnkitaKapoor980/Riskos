@@ -3,7 +3,7 @@ import React from 'react';
 import img5 from "../assets/img5.jpg";
 import img6 from "../assets/img6.jpg";
 import img7 from "../assets/img7.jpg";
-import img4 from "../assets/img4.jpg"
+import img8 from "../assets/img8.jpg"
 import vishwas from "../assets/vishwas.jpg"
 
 const AboutUsPage = () => {
@@ -31,7 +31,7 @@ const AboutUsPage = () => {
       <div className="max-w-6xl mx-auto py-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-10 px-4">
         {/* Developer 1 */}
         <div className="flex flex-col items-center text-center transition-transform transform hover:rotate-[-3deg] hover:scale-105 duration-300">
-          <img src={img4} alt="Developer 1" className="w-32 h-32 object-cover rounded-full mb-4" />
+          <img src={img8} alt="Developer 1" className="w-32 h-32 object-cover rounded-full mb-4" />
           <h3 className="text-xl font-semibold">Vishwas</h3>
           <p className="text-gray-600 mt-2">Haa btao kisko kya dikkat hai.</p>
         </div>
