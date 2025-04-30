@@ -1,11 +1,9 @@
-version: '3.8'
-
 services:
   backend:
     image: ${DOCKER_REGISTRY}/${APP_NAME}-backend:latest
     ports:
-      - "5000:5000"
-      - "5001:5001"
+      - "5002:5000"  # Changed ports to avoid conflict
+      - "5003:5001"
     environment:
       - NODE_ENV=production
       - MONGO_URI=${MONGO_URI}

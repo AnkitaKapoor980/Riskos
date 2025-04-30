@@ -1,7 +1,10 @@
-# Stage 1: Builder for dependencies
+# Stage 1: Builder with fixed package sources
 FROM node:18-bullseye-slim as builder
 
-WORKDIR /app
+# Configure proper package sources first
+RUN echo "deb http://deb.debian.org/debian bullseye main" > /etc/apt/sources.list && \
+    echo "deb http://deb.debian.org/debian-security bullseye-security main" >> /etc/apt/sources.list && \
+    echo "deb http://deb.debian.org/debian bullseye-updates main" >> /etc/apt/sources.list
 
 # Install Python and create virtual env
 RUN apt-get update && \
