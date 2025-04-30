@@ -1,47 +1,66 @@
-# Stage 1: Build Node.js dependencies
-FROM node:18-bullseye-slim AS node-builder
+FROM node:18-bullseye
 
 WORKDIR /app
 
-# Copy only package files first for better caching
-# Changed path to reflect the actual location of the files in the build context
-COPY ./backend/package*.json ./
-RUN npm ci
-
-# Stage 2: Build Python dependencies
-FROM python:3.9-slim AS python-builder
-
-WORKDIR /app
-
-# Copy only Python requirements
-# Changed path to reflect the actual location of the files in the build context
-COPY ./backend/flask-api/requirements.txt ./flask-api/
-RUN pip install --no-cache-dir -r ./flask-api/requirements.txt --target /python-deps
-
-# Stage 3: Final image
-FROM node:18-bullseye-slim
-
-WORKDIR /app
-
-# Install Python
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends python3 python3-pip && \
+# Install Python and create a virtual environment
+RUN apt-get update && apt-get install -y python3 python3-pip python3-venv && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy Node.js dependencies
-COPY --from=node-builder /app/node_modules ./node_modules
+# Create a virtual environment
+RUN python3 -m venv /opt/venv
+# Activate the virtual environment
+ENV PATH="/opt/venv/bin:$PATH"
 
-# Copy Python dependencies
-COPY --from=python-builder /python-deps /usr/local/lib/python3.9/site-packages/
+# Copy the entire context first - we'll figure out the structure later
+COPY . /tmp/build-context/
 
-# Now copy the application code
-# Changed path to reflect the actual location of the files in the build context
-COPY ./backend/ ./
+# Debug - list files to see what we have
+RUN ls -la /tmp/build-context/
+RUN find /tmp/build-context/ -type d | sort
+
+# Now try to find and copy package.json files
+RUN if [ -d "/tmp/build-context/backend" ]; then \
+        echo "Found backend dir at /tmp/build-context/backend" && \
+        mkdir -p /app && \
+        cp -r /tmp/build-context/backend/* /app/; \
+    elif [ -d "/tmp/build-context/Riskos/backend" ]; then \
+        echo "Found backend dir at /tmp/build-context/Riskos/backend" && \
+        mkdir -p /app && \
+        cp -r /tmp/build-context/Riskos/backend/* /app/; \
+    else \
+        echo "No backend directory found"; \
+        find /tmp/build-context -name "package.json" | head -1; \
+        find /tmp/build-context -name "requirements.txt" | head -1; \
+        exit 1; \
+    fi
+
+# Install Node.js dependencies
+RUN if [ -f "package.json" ]; then \
+        echo "Found package.json, installing dependencies..." && \
+        npm install; \
+    else \
+        echo "No package.json found"; \
+        ls -la; \
+        exit 1; \
+    fi
+
+# Install Python dependencies
+RUN if [ -f "flask-api/requirements.txt" ]; then \
+        echo "Found requirements.txt, installing dependencies..." && \
+        pip install --no-cache-dir -r flask-api/requirements.txt; \
+    elif [ -f "requirements.txt" ]; then \
+        echo "Found requirements.txt at root, installing dependencies..." && \
+        pip install --no-cache-dir -r requirements.txt; \
+    else \
+        echo "No requirements.txt found"; \
+        find / -name "requirements.txt"; \
+        exit 1; \
+    fi
 
 # Expose ports for Node.js and Flask
 EXPOSE 5000
 EXPOSE 5001
 
-# Start both servers
-CMD ["sh", "-c", "python3 flask-api/app.py & npm start"]
+# Start both servers (Node.js and Flask)
+CMD ["sh", "-c", "echo 'Starting servers...' && if [ -f 'flask-api/app.py' ]; then python3 flask-api/app.py & npm start; else echo 'Application entry points not found'; exit 1; fi"]
