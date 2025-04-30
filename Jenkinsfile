@@ -3,7 +3,7 @@ pipeline {
     
     environment {
         DOCKER_BUILDKIT = "1"  // Enable faster Docker builds
-        DOCKER_REGISTRY = "localhost:5000"
+        DOCKER_REGISTRY = "localhost:5000"  // Consider changing if not using a local registry
         APP_NAME = "riskos"
         MONGO_URI = credentials('mongodb-uri')
         // Cache directories for faster builds
@@ -53,6 +53,14 @@ pipeline {
                             echo pymongo==4.3.3 >> backend\\flask-api\\requirements.txt
                             echo flask-cors==3.0.10 >> backend\\flask-api\\requirements.txt
                             echo python-dotenv==1.0.0 >> backend\\flask-api\\requirements.txt
+                            echo gunicorn==20.1.0 >> backend\\flask-api\\requirements.txt
+                        )
+                    '''
+                    
+                    // Ensure nginx.conf exists
+                    bat '''
+                        IF NOT EXIST frontend\\nginx.conf (
+                            copy nginx-config.config frontend\\nginx.conf
                         )
                     '''
                     
@@ -74,6 +82,12 @@ pipeline {
                             bat """
                                 docker build %DOCKER_ARGS% --cache-from %DOCKER_REGISTRY%/%APP_NAME%-backend:latest -t %DOCKER_REGISTRY%/%APP_NAME%-backend:%IMAGE_TAG% -t %DOCKER_REGISTRY%/%APP_NAME%-backend:latest -f backend.Dockerfile .
                             """
+                            
+                            // Push images to registry
+                            bat """
+                                docker push %DOCKER_REGISTRY%/%APP_NAME%-backend:%IMAGE_TAG%
+                                docker push %DOCKER_REGISTRY%/%APP_NAME%-backend:latest
+                            """
                         }
                     }
                 }
@@ -82,6 +96,12 @@ pipeline {
                         script {
                             bat """
                                 docker build %DOCKER_ARGS% --cache-from %DOCKER_REGISTRY%/%APP_NAME%-frontend:latest -t %DOCKER_REGISTRY%/%APP_NAME%-frontend:%IMAGE_TAG% -t %DOCKER_REGISTRY%/%APP_NAME%-frontend:latest -f frontend.Dockerfile .
+                            """
+                            
+                            // Push images to registry
+                            bat """
+                                docker push %DOCKER_REGISTRY%/%APP_NAME%-frontend:%IMAGE_TAG%
+                                docker push %DOCKER_REGISTRY%/%APP_NAME%-frontend:latest
                             """
                         }
                     }
@@ -96,6 +116,7 @@ pipeline {
                     bat """
                         set DOCKER_REGISTRY=%DOCKER_REGISTRY%
                         set APP_NAME=%APP_NAME%
+                        set IMAGE_TAG=%IMAGE_TAG%
                         set MONGO_URI=%MONGO_URI%
                         docker-compose down || echo "No containers to stop"
                         docker-compose up -d

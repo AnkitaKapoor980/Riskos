@@ -1,6 +1,8 @@
+version: '3.8'
+
 services:
   backend:
-    image: ${DOCKER_REGISTRY}/${APP_NAME}-backend:latest
+    image: ${DOCKER_REGISTRY}/${APP_NAME}-backend:${IMAGE_TAG:-latest}
     ports:
       - "5002:5000"
       - "5003:5001"
@@ -18,7 +20,7 @@ services:
       - riskos-network
 
   frontend:
-    image: ${DOCKER_REGISTRY}/${APP_NAME}-frontend:latest
+    image: ${DOCKER_REGISTRY}/${APP_NAME}-frontend:${IMAGE_TAG:-latest}
     ports:
       - "80:80"
     depends_on:
