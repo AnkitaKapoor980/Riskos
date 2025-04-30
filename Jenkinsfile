@@ -9,7 +9,7 @@ pipeline {
     }
     
     triggers {
-        githubPush()  // Trigger on GitHub commits via smee.io
+        pollSCM('H/2 * * * *')  // Poll every 2 minutes as fallback
     }
     
     options {
@@ -29,7 +29,8 @@ pipeline {
                         deleteUntrackedNestedRepositories: true
                     ]],
                     userRemoteConfigs: [[
-                        url: 'https://github.com/AnkitaKapoor980/Riskos.git'
+                        url: 'https://github.com/AnkitaKapoor980/Riskos.git',
+                        credentialsId: 'github-credentials'
                     ]]
                 ])
             }
@@ -40,16 +41,18 @@ pipeline {
                 stage('Backend') {
                     steps {
                         script {
-                            docker.build("${DOCKER_REGISTRY}/${APP_NAME}-backend:latest", 
-                                       "-f backend.Dockerfile .")
+                            bat """
+                                docker build --pull -t %DOCKER_REGISTRY%/%APP_NAME%-backend:latest -f backend.Dockerfile .
+                            """
                         }
                     }
                 }
                 stage('Frontend') {
                     steps {
                         script {
-                            docker.build("${DOCKER_REGISTRY}/${APP_NAME}-frontend:latest", 
-                                       "-f frontend.Dockerfile .")
+                            bat """
+                                docker build --pull -t %DOCKER_REGISTRY%/%APP_NAME%-frontend:latest -f frontend.Dockerfile .
+                            """
                         }
                     }
                 }
@@ -59,8 +62,10 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    sh 'docker-compose down || true'
-                    sh 'docker-compose up -d'
+                    bat """
+                        docker-compose down || echo "No containers to stop"
+                        docker-compose up -d
+                    """
                 }
             }
         }
@@ -68,7 +73,7 @@ pipeline {
     
     post {
         always {
-            sh 'docker system prune -f'
+            bat "docker system prune -f || echo \"Docker cleanup skipped\""
             cleanWs()
         }
     }
