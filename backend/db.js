@@ -2,17 +2,21 @@
 const mongoose = require("mongoose");
 require("dotenv").config();
 
-const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/RISKOS";
-
 const connectDB = async () => {
   try {
     await mongoose.connect(MONGO_URI, {
       // useNewUrlParser: true,
       // useUnifiedTopology: true,
+    const mongoURI = process.env.MONGO_URI || "mongodb://localhost:27017/RISKOS";
+
+    await mongoose.connect(mongoURI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
     });
-    console.log("MongoDB Connected");
+
+    console.log(`MongoDB Connected: ${mongoURI.includes('mongodb+srv') ? 'Atlas Cluster' : 'Local Database'}`);
   } catch (err) {
-    console.error("MongoDB connection Error", err);
+    console.error("MongoDB connection Error:", err.message);
     process.exit(1);
   }
 };
