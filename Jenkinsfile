@@ -2,35 +2,34 @@ pipeline {
     agent any
     
     environment {
-        DOCKER_BUILDKIT = "1"  // Enable faster Docker builds
-        DOCKER_REGISTRY = "localhost:6000"  // Consider changing if not using a local registry
+        DOCKER_BUILDKIT = "1"
+        DOCKER_REGISTRY = "localhost:6000"
         APP_NAME = "riskos"
         MONGO_URI = credentials('mongodb-uri')
-        // Cache directories for faster builds
         DOCKER_ARGS = "--build-arg BUILDKIT_INLINE_CACHE=1"
     }
     
     triggers {
-        githubPush()  // Explicit GitHub webhook trigger
+        pollSCM('H/5 * * * *')  // More reliable than githubPush()
     }
     
     options {
         buildDiscarder(logRotator(numToKeepStr: '5'))
         disableConcurrentBuilds()
         timeout(time: 15, unit: 'MINUTES')
-        skipDefaultCheckout(true)  // We'll handle checkout ourselves
     }
     
     stages {
         stage('Checkout') {
             steps {
-                // Clean workspace before checkout for Windows
                 cleanWs()
-                
                 checkout([
                     $class: 'GitSCM',
                     branches: [[name: '*/main']],
-                    extensions: [[$class: 'CleanBeforeCheckout']],
+                    extensions: [
+                        [$class: 'CleanBeforeCheckout'],
+                        [$class: 'RelativeTargetDirectory', relativeTargetDir: 'Riskos']
+                    ],
                     userRemoteConfigs: [[
                         url: 'https://github.com/AnkitaKapoor980/Riskos.git',
                         credentialsId: 'github-credentials'
@@ -42,8 +41,9 @@ pipeline {
         stage('Prepare Environment') {
             steps {
                 script {
-                    // Create requirements.txt if missing
+                    // Backend setup
                     bat '''
+                        cd Riskos
                         IF NOT EXIST backend\\flask-api (
                             mkdir backend\\flask-api
                         )
@@ -57,17 +57,40 @@ pipeline {
                         )
                     '''
                     
-                    // Ensure nginx.conf exists
+                    // Frontend setup with proper nginx config handling
                     bat '''
-                        IF NOT EXIST frontend\\nginx.conf (
-                            copy nginx-config.config frontend\\nginx.conf
+                        cd Riskos
+                        IF NOT EXIST frontend (
+                            mkdir frontend
+                        )
+                        
+                        IF EXIST "nginx-config.conf" (
+                            copy nginx-config.conf frontend\\nginx.conf
+                        ) ELSE (
+                            echo Creating default nginx.conf...
+                            echo server { > frontend\\nginx.conf
+                            echo     listen 3000; >> frontend\\nginx.conf
+                            echo     server_name localhost; >> frontend\\nginx.conf
+                            echo. >> frontend\\nginx.conf
+                            echo     location / { >> frontend\\nginx.conf
+                            echo         root /usr/share/nginx/html; >> frontend\\nginx.conf
+                            echo         index index.html; >> frontend\\nginx.conf
+                            echo         try_files $uri $uri/ /index.html; >> frontend\\nginx.conf
+                            echo     } >> frontend\\nginx.conf
+                            echo. >> frontend\\nginx.conf
+                            echo     location /api/ { >> frontend\\nginx.conf
+                            echo         proxy_pass http://backend:5100/api/; >> frontend\\nginx.conf
+                            echo         proxy_http_version 1.1; >> frontend\\nginx.conf
+                            echo         proxy_set_header Upgrade $http_upgrade; >> frontend\\nginx.conf
+                            echo         proxy_set_header Connection 'upgrade'; >> frontend\\nginx.conf
+                            echo         proxy_set_header Host $host; >> frontend\\nginx.conf
+                            echo         proxy_cache_bypass $http_upgrade; >> frontend\\nginx.conf
+                            echo     } >> frontend\\nginx.conf
+                            echo } >> frontend\\nginx.conf
                         )
                     '''
                     
-                    // Tag images with build number for better caching
                     env.IMAGE_TAG = "${BUILD_NUMBER}"
-                    
-                    // Check if Docker is running
                     bat 'docker info || (echo "Docker not running" && exit 1)'
                 }
             }
@@ -78,15 +101,10 @@ pipeline {
                 stage('Backend') {
                     steps {
                         script {
-                            // Use cache-from for better caching
                             bat """
-                                docker build %DOCKER_ARGS% --cache-from %DOCKER_REGISTRY%/%APP_NAME%-backend:latest -t %DOCKER_REGISTRY%/%APP_NAME%-backend:%IMAGE_TAG% -t %DOCKER_REGISTRY%/%APP_NAME%-backend:latest -f backend.Dockerfile .
-                            """
-                            
-                            // Push images to registry
-                            bat """
-                                docker push %DOCKER_REGISTRY%/%APP_NAME%-backend:%IMAGE_TAG%
-                                docker push %DOCKER_REGISTRY%/%APP_NAME%-backend:latest
+                                cd Riskos
+                                docker build %DOCKER_ARGS% -t %DOCKER_REGISTRY%/%APP_NAME%-backend:%IMAGE_TAG% -t %DOCKER_REGISTRY%/%APP_NAME%-backend:latest -f backend.Dockerfile .
+                                docker push %DOCKER_REGISTRY%/%APP_NAME%-backend:%IMAGE_TAG% || echo "Push failed but continuing"
                             """
                         }
                     }
@@ -95,13 +113,9 @@ pipeline {
                     steps {
                         script {
                             bat """
-                                docker build %DOCKER_ARGS% --cache-from %DOCKER_REGISTRY%/%APP_NAME%-frontend:latest -t %DOCKER_REGISTRY%/%APP_NAME%-frontend:%IMAGE_TAG% -t %DOCKER_REGISTRY%/%APP_NAME%-frontend:latest -f frontend.Dockerfile .
-                            """
-                            
-                            // Push images to registry
-                            bat """
-                                docker push %DOCKER_REGISTRY%/%APP_NAME%-frontend:%IMAGE_TAG%
-                                docker push %DOCKER_REGISTRY%/%APP_NAME%-frontend:latest
+                                cd Riskos
+                                docker build %DOCKER_ARGS% -t %DOCKER_REGISTRY%/%APP_NAME%-frontend:%IMAGE_TAG% -t %DOCKER_REGISTRY%/%APP_NAME%-frontend:latest -f frontend.Dockerfile .
+                                docker push %DOCKER_REGISTRY%/%APP_NAME%-frontend:%IMAGE_TAG% || echo "Push failed but continuing"
                             """
                         }
                     }
@@ -112,14 +126,29 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    // Export environment variables for docker-compose
                     bat """
-                        set DOCKER_REGISTRY=%DOCKER_REGISTRY%
-                        set APP_NAME=%APP_NAME%
-                        set IMAGE_TAG=%IMAGE_TAG%
-                        set MONGO_URI=%MONGO_URI%
-                        docker-compose down || echo "No containers to stop"
-                        docker-compose up -d
+                        cd Riskos
+                        echo version: '3.8' > docker-compose-temp.yml
+                        echo. >> docker-compose-temp.yml
+                        echo services: >> docker-compose-temp.yml
+                        echo   backend: >> docker-compose-temp.yml
+                        echo     image: %DOCKER_REGISTRY%/%APP_NAME%-backend:%IMAGE_TAG% >> docker-compose-temp.yml
+                        echo     ports: >> docker-compose-temp.yml
+                        echo       - "5100:5000" >> docker-compose-temp.yml
+                        echo       - "5101:5001" >> docker-compose-temp.yml
+                        echo     environment: >> docker-compose-temp.yml
+                        echo       - NODE_ENV=production >> docker-compose-temp.yml
+                        echo       - MONGO_URI=%MONGO_URI% >> docker-compose-temp.yml
+                        echo     restart: unless-stopped >> docker-compose-temp.yml
+                        echo. >> docker-compose-temp.yml
+                        echo   frontend: >> docker-compose-temp.yml
+                        echo     image: %DOCKER_REGISTRY%/%APP_NAME%-frontend:%IMAGE_TAG% >> docker-compose-temp.yml
+                        echo     ports: >> docker-compose-temp.yml
+                        echo       - "3000:80" >> docker-compose-temp.yml
+                        echo     restart: unless-stopped >> docker-compose-temp.yml
+                        
+                        docker-compose -f docker-compose-temp.yml down || echo "Cleanup failed"
+                        docker-compose -f docker-compose-temp.yml up -d
                     """
                 }
             }
@@ -128,17 +157,8 @@ pipeline {
     
     post {
         always {
-            script {
-                // Prune only dangling images to avoid removing cached layers
-                bat "docker image prune -f"
-            }
+            bat 'docker system prune -f'
             cleanWs()
-        }
-        success {
-            echo 'Build completed successfully!'
-        }
-        failure {
-            echo 'Build failed!'
         }
     }
 }
