@@ -1,16 +1,25 @@
-import React, { useState } from "react";
-import axios from "axios";
+import React, { useState } from 'react';
+import axios from 'axios';
+import StockTooltip from '../components/StockTooltip';
 import { FaPlusCircle, FaMinusCircle } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext"; // update path if needed
 import { PortfolioVisualizations } from "./PortfolioVisualizations"; // Import the new component
+import { useNavigate } from 'react-router-dom';
+import { AuthContext } from '../context/AuthContext'; // Adjust path if needed
 
 const Assessment = () => {
   const [stockData, setStockData] = useState([{ stockName: "", quantity: "", buyPrice: "" }]);
   const [confidenceLevel, setConfidenceLevel] = useState(95);
   const [forecastDays, setForecastDays] = useState(30);
-  const [activeMode, setActiveMode] = useState("calculate");
-  const [result, setResult] = useState(null);
+  const [riskType, setRiskType] = useState(''); // "current" or "forecast"
+  const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [activeMode, setActiveMode] = useState("calculate");
+
+  const navigate = useNavigate();
+  const { isLoggedIn } = useContext(AuthContext);
+
+
   const [error, setError] = useState(null);
   const { user } = useAuth(); // Access the auth context
 
