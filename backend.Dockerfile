@@ -4,7 +4,8 @@ FROM node:18-bullseye-slim AS node-builder
 WORKDIR /app
 
 # Copy only package files first for better caching
-COPY backend/package*.json ./
+# Changed path to reflect the actual location of the files in the build context
+COPY ./backend/package*.json ./
 RUN npm ci
 
 # Stage 2: Build Python dependencies
@@ -13,7 +14,8 @@ FROM python:3.9-slim AS python-builder
 WORKDIR /app
 
 # Copy only Python requirements
-COPY backend/flask-api/requirements.txt ./flask-api/
+# Changed path to reflect the actual location of the files in the build context
+COPY ./backend/flask-api/requirements.txt ./flask-api/
 RUN pip install --no-cache-dir -r ./flask-api/requirements.txt --target /python-deps
 
 # Stage 3: Final image
@@ -34,7 +36,8 @@ COPY --from=node-builder /app/node_modules ./node_modules
 COPY --from=python-builder /python-deps /usr/local/lib/python3.9/site-packages/
 
 # Now copy the application code
-COPY backend/ ./
+# Changed path to reflect the actual location of the files in the build context
+COPY ./backend/ ./
 
 # Expose ports for Node.js and Flask
 EXPOSE 5000

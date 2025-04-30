@@ -55,22 +55,26 @@ pipeline {
         }
         
         stage('Build Docker Images') {
-            steps {
-                script {
-                    try {
-                        // Use --no-cache only when needed
-                        // Add build-args for better caching
-                        bat 'docker build --pull --build-arg BUILDKIT_INLINE_CACHE=1 -t %DOCKER_REGISTRY%/%APP_NAME%-backend:latest -f backend.Dockerfile .'
-                        bat 'docker build --pull --build-arg BUILDKIT_INLINE_CACHE=1 -t %DOCKER_REGISTRY%/%APP_NAME%-frontend:latest -f frontend.Dockerfile .'
-                        echo 'Docker images built successfully'
-                    } catch (Exception e) {
-                        echo "Docker build failed: ${e.message}"
-                        echo "Continuing with pipeline..."
-                        currentBuild.result = 'UNSTABLE'
-                    }
-                }
+    steps {
+        script {
+            try {
+                // Explicitly check if directories exist before building
+                bat 'echo "Checking directory structure before Docker build:"'
+                bat 'dir'
+                bat 'if exist backend dir backend'
+                
+                // Use . as build context and specify the full path to Dockerfiles
+                bat 'docker build --pull -t %DOCKER_REGISTRY%/%APP_NAME%-backend:latest -f backend.Dockerfile .'
+                bat 'docker build --pull -t %DOCKER_REGISTRY%/%APP_NAME%-frontend:latest -f frontend.Dockerfile .'
+                echo 'Docker images built successfully'
+            } catch (Exception e) {
+                echo "Docker build failed: ${e.message}"
+                echo "Continuing with pipeline..."
+                currentBuild.result = 'UNSTABLE'
             }
         }
+    }
+}
         
         stage('Deploy') {
             steps {
