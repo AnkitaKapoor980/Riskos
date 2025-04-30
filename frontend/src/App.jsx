@@ -25,12 +25,12 @@ function AppContent() {
               <Route path="/news" element={<StockMarketNews />} />
               <Route path="/portfolio" element={<PortfolioDashboard />} />
               <Route path="/" element={isLoggedIn ? <Assessment /> : <LandingPage />} />
-              <Route path="/risk-prediction" element={<RiskAnalysisPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
               <Route path="/learn" element={ <Learn />} />
-            <Route path="/about" element={<AboutUsPage />} />
-            <Route path="/risk-prediction" element={<Assessment/>} />
+              <Route path="/about" element={<AboutUsPage />} />
+              <Route path= "/assessment" element={<Assessment />} />
+
           </Routes>
         </ErrorBoundary>
       </main>
