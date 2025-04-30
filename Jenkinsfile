@@ -3,7 +3,7 @@ pipeline {
     
     environment {
         DOCKER_BUILDKIT = "1"  // Enable faster Docker builds
-        DOCKER_REGISTRY = "localhost:5000"  // Consider changing if not using a local registry
+        DOCKER_REGISTRY = "localhost:6000"  // Consider changing if not using a local registry
         APP_NAME = "riskos"
         MONGO_URI = credentials('mongodb-uri')
         // Cache directories for faster builds
