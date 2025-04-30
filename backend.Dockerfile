@@ -1,5 +1,5 @@
 # Stage 1: Builder with fixed package sources
-FROM node:18-bullseye-slim as builder
+FROM node:18-bullseye-slim AS builder
 
 # Configure proper package sources first
 RUN echo "deb http://deb.debian.org/debian bullseye main" > /etc/apt/sources.list && \
@@ -15,15 +15,19 @@ RUN apt-get update && \
 
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Copy only dependency files first (better caching)
-COPY backend/package*.json ./
-COPY backend/flask-api/ ./flask-api/
+WORKDIR /app
 
-# Install dependencies
-RUN npm ci --only=production && \
-    [ -f "flask-api/requirements.txt" ] && \
-    pip install --no-cache-dir -r flask-api/requirements.txt || \
-    echo "No requirements.txt found"
+# Copy only dependency files first (better caching)
+COPY backend/package*.json .
+COPY backend/flask-api/requirements.txt ./flask-api/
+
+# Install dependencies with verbose output
+RUN echo "Installing Node.js dependencies..." && \
+    npm ci --only=production --loglevel verbose && \
+    echo "Installing Python dependencies..." && \
+    ([ -f "flask-api/requirements.txt" ] && \
+     pip install --no-cache-dir -r flask-api/requirements.txt || \
+     echo "No requirements.txt found")
 
 # Stage 2: Final image
 FROM node:18-bullseye-slim
