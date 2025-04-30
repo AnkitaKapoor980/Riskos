@@ -13,6 +13,8 @@ backend/dist
 .git
 .gitignore
 .github
+node_modules
+*.md
 
 # CI/CD
 Jenkinsfile
