@@ -1,29 +1,44 @@
-FROM node:18-bullseye
+# Stage 1: Build Node.js dependencies
+FROM node:18-bullseye-slim AS node-builder
 
 WORKDIR /app
 
-# Install Python and create a virtual environment
-RUN apt-get update && apt-get install -y python3 python3-pip python3-venv
-
-# Create a virtual environment
-RUN python3 -m venv /opt/venv
-# Activate the virtual environment in all commands
-ENV PATH="/opt/venv/bin:$PATH"
-
-# Copy and install Node.js dependencies
+# Copy only package files first for better caching
 COPY backend/package*.json ./
-RUN npm install
+RUN npm ci
 
-# Copy and install Python requirements in the virtual environment
+# Stage 2: Build Python dependencies
+FROM python:3.9-slim AS python-builder
+
+WORKDIR /app
+
+# Copy only Python requirements
 COPY backend/flask-api/requirements.txt ./flask-api/
-RUN pip install --no-cache-dir -r ./flask-api/requirements.txt
+RUN pip install --no-cache-dir -r ./flask-api/requirements.txt --target /python-deps
 
-# Copy the rest of the backend code
+# Stage 3: Final image
+FROM node:18-bullseye-slim
+
+WORKDIR /app
+
+# Install Python
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends python3 python3-pip && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy Node.js dependencies
+COPY --from=node-builder /app/node_modules ./node_modules
+
+# Copy Python dependencies
+COPY --from=python-builder /python-deps /usr/local/lib/python3.9/site-packages/
+
+# Now copy the application code
 COPY backend/ ./
 
 # Expose ports for Node.js and Flask
 EXPOSE 5000
 EXPOSE 5001
 
-# Start both servers (Node.js and Flask)
+# Start both servers
 CMD ["sh", "-c", "python3 flask-api/app.py & npm start"]
