@@ -1,6 +1,7 @@
 const axios = require("axios");
 const PredictionResult = require("../models/PredictionResult");
 const path = require("path");
+const RiskResult = require("../models/RiskResult");
 
 // =================== MARKET CONTROLLER SECTION ===================
 const getPrice = async (req, res) => {
@@ -32,7 +33,37 @@ const calculateRisk = async (req, res) => {
     const response = await axios.post(flaskUrl, req.body);
 
     console.log("Flask response data:", response.data);
-    res.json(response.data);
+    
+    // Save to MongoDB
+    const riskResult = new RiskResult({
+      user: req.user._id, // From auth middleware
+      type: "calculate",
+      input: {
+        symbols: req.body.portfolio.map(stock => stock.stockName),
+        quantities: req.body.portfolio.map(stock => parseInt(stock.quantity, 10)),
+        buyPrices: req.body.portfolio.map(stock => parseInt(stock.buyPrice, 10))
+      },
+      output: {
+        var: response.data.var,
+        cvar: response.data.cvar,
+        sharpeRatio: response.data.sharpeRatio,
+        maxDrawdown: response.data.maxDrawdown,
+        monteCarlo: response.data.monteCarlo || {
+          meanReturn: 0,
+          stdDeviation: 0
+        }
+      },
+      // Additional fields from response if needed
+      ...response.data
+    });
+
+    await riskResult.save();
+    console.log("Risk result saved to MongoDB");
+    
+    res.json({
+      ...response.data,
+      mongoId: riskResult._id // Return the saved document ID
+    });
   } catch (error) {
     console.error("Error in risk calculation:", error.message);
     if (error.response) {
@@ -41,7 +72,6 @@ const calculateRisk = async (req, res) => {
     res.status(500).json({ error: "Something went wrong while calculating risk." });
   }
 };
-
 // =================== PREDICTION CONTROLLER SECTION ===================
 const analyzePortfolio = async (req, res) => {
   // Log the incoming request data for debugging
