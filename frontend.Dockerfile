@@ -6,8 +6,9 @@ WORKDIR /app
 # Copy package files first for better layer caching
 COPY frontend/package*.json ./
 
-# Install dependencies with clean cache
-RUN npm ci --no-audit --progress=false && \
+# Install dependencies with optimized cache settings
+RUN npm ci --no-audit --progress=false --prefer-offline || \
+    npm install --no-audit --progress=false && \
     npm cache clean --force
 
 # Copy remaining source files
@@ -27,11 +28,11 @@ RUN if [ -f "package.json" ] && grep -q '"build"' package.json; then \
 # Stage 2: Serve
 FROM nginx:1.25.2-alpine
 
-# Copy built files from builder stage
-COPY --from=builder /app/dist /usr/share/nginx/html
-
 # Add nginx configuration
 COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
+
+# Copy built files from builder stage
+COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s \

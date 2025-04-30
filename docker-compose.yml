@@ -2,11 +2,18 @@ services:
   backend:
     image: ${DOCKER_REGISTRY}/${APP_NAME}-backend:latest
     ports:
-      - "5002:5000"  # Changed ports to avoid conflict
+      - "5002:5000"
       - "5003:5001"
     environment:
       - NODE_ENV=production
       - MONGO_URI=${MONGO_URI}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     networks:
       - riskos-network
 
@@ -16,6 +23,12 @@ services:
       - "80:80"
     depends_on:
       - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     networks:
       - riskos-network
 
