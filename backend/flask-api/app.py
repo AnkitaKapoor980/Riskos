@@ -1,82 +1,84 @@
 import os
-from flask_cors import CORS
+import numpy as np
 from flask import Flask, request, jsonify
-from utils.data_loader import load_stock_data
+from flask_cors import CORS
+from utils.data_loader import load_stock_data, get_csv_file_mapping
 from models.risk_metrics import (
     calculate_var,
     calculate_cvar,
     calculate_sharpe_ratio,
     calculate_max_drawdown
 )
-import numpy as np
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/api/*": {"origins": "http://localhost:5001", 
+                                 "allow_headers": ["Content-Type", "Authorization"]}})
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 folder_path = os.path.join(BASE_DIR, 'Scripts')
+
+# Load stock data and mapping
 stock_prices = load_stock_data(folder_path)
+stock_mapping = get_csv_file_mapping(folder_path)
 returns = stock_prices.pct_change().dropna()
 
 @app.route('/calculate-risk', methods=['POST'])
 def calculate_risk():
     try:
         data = request.get_json()
+        print("Received request with data:", data)
+
         portfolio = data.get("portfolio", [])
+        confidence_level = data.get("confidenceLevel", 95)
 
-        if not portfolio:
-            return jsonify({"error": "No portfolio provided"}), 400
+        # Calculate total portfolio value
+        portfolio_value = sum(int(stock["quantity"]) * int(stock["buyPrice"]) for stock in portfolio)
 
-        portfolio_value = sum(stock["quantity"] * stock_prices[stock["symbol"]].iloc[-1] for stock in portfolio)
-        
-        stock_weights = {}
-        stock_returns_data = {}
+        # Calculate individual stock values
+        stock_values = {
+            stock["stockName"]: int(stock["quantity"]) * stock_prices[stock_mapping[stock["stockName"]]["full_name"]].iloc[-1]
+            for stock in portfolio
+        }
 
-        for stock in portfolio:
-            symbol = stock["symbol"]
-            quantity = stock["quantity"]
-            if symbol not in stock_prices.columns:
-                continue
-            current_price = stock_prices[symbol].iloc[-1]
-            stock_value = quantity * current_price
-            stock_weights[symbol] = stock_value
-            stock_returns_data[symbol] = returns[symbol]
-
-        total_value = sum(stock_weights.values())
-        for symbol in stock_weights:
-            stock_weights[symbol] /= total_value
-
+        # Individual stock risk metrics
         risk_metrics = {}
-        for symbol, weight in stock_weights.items():
-            ret = stock_returns_data[symbol]
-            val = total_value * weight
-            risk_metrics[symbol] = {
-                "VaR (₹)": calculate_var(ret, val),
-                "CVaR (₹)": calculate_cvar(ret, val),
-                "Sharpe Ratio": calculate_sharpe_ratio(ret),
-                "Max Drawdown (%)": calculate_max_drawdown(stock_prices[symbol])
+        for stock in portfolio:
+            stock_symbol = stock["stockName"]
+            full_name = stock_mapping[stock_symbol]["full_name"]
+            stock_returns = returns[full_name]
+            stock_value = stock_values[stock_symbol]
+
+            risk_metrics[stock_symbol] = {
+                "VaR (₹)": calculate_var(stock_returns, stock_value, confidence_level),
+                "CVaR (₹)": calculate_cvar(stock_returns, stock_value, confidence_level),
+                "Sharpe Ratio": calculate_sharpe_ratio(stock_returns),
+                "Max Drawdown": calculate_max_drawdown(stock_prices[full_name])
             }
 
-        portfolio_returns = sum(stock_returns_data[symbol] * weight for symbol, weight in stock_weights.items())
-        portfolio_var = calculate_var(portfolio_returns, total_value)
-        portfolio_cvar = calculate_cvar(portfolio_returns, total_value)
-        portfolio_sharpe = calculate_sharpe_ratio(portfolio_returns)
-        portfolio_drawdown = calculate_max_drawdown(portfolio_returns.cumsum())
+        # Portfolio-level metrics
+        weights = np.array([
+            stock_values[stock["stockName"]] / portfolio_value for stock in portfolio
+        ])
+        selected_columns = [stock_mapping[stock["stockName"]]["full_name"] for stock in portfolio]
+        selected_returns = returns[selected_columns]
+        portfolio_returns = selected_returns.dot(weights)
+
+        portfolio_risk_metrics = {
+            "Total Portfolio Value (₹)": round(portfolio_value, 2),
+            "VaR (₹)": calculate_var(portfolio_returns, portfolio_value, confidence_level),
+            "CVaR (₹)": calculate_cvar(portfolio_returns, portfolio_value, confidence_level),
+            "Sharpe Ratio": calculate_sharpe_ratio(portfolio_returns),
+            "Max Drawdown": calculate_max_drawdown(stock_prices.mean(axis=1))
+        }
 
         return jsonify({
-            "portfolio_summary": {
-                "Total Value": f"₹{total_value:,.2f}",
-                "VaR (₹)": abs(portfolio_var),
-                "CVaR (₹)": abs(portfolio_cvar),
-                "Sharpe Ratio": portfolio_sharpe,
-                "Max Drawdown (%)": abs(portfolio_drawdown)
-            },
-            "individual_stocks": risk_metrics
+            "individual_stocks": risk_metrics,
+            "portfolio_summary": portfolio_risk_metrics
         })
 
     except Exception as e:
-        print(str(e))
-        return jsonify({"error": str(e)}), 500
+        print("Error in calculating risk:", e)
+        return jsonify({"error": str(e)})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=5002)
