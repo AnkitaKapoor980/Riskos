@@ -10,7 +10,7 @@ pipeline {
     }
     
     triggers {
-        pollSCM('H/5 * * * *')  // More reliable than githubPush()
+        pollSCM('H/5 * * * *')
     }
     
     options {
@@ -57,7 +57,7 @@ pipeline {
                         )
                     '''
                     
-                    // Frontend setup with proper nginx config handling
+                    // Frontend setup
                     bat '''
                         cd Riskos
                         IF NOT EXIST frontend (
@@ -128,9 +128,7 @@ pipeline {
                 script {
                     bat """
                         cd Riskos
-                        echo version: '3.8' > docker-compose-temp.yml
-                        echo. >> docker-compose-temp.yml
-                        echo services: >> docker-compose-temp.yml
+                        echo services: > docker-compose-temp.yml
                         echo   backend: >> docker-compose-temp.yml
                         echo     image: %DOCKER_REGISTRY%/%APP_NAME%-backend:%IMAGE_TAG% >> docker-compose-temp.yml
                         echo     ports: >> docker-compose-temp.yml
@@ -138,17 +136,25 @@ pipeline {
                         echo       - "5101:5001" >> docker-compose-temp.yml
                         echo     environment: >> docker-compose-temp.yml
                         echo       - NODE_ENV=production >> docker-compose-temp.yml
-                        echo       - MONGO_URI=%MONGO_URI% >> docker-compose-temp.yml
+                        echo       - MONGO_URI=${MONGO_URI.replace('&', '^&')} >> docker-compose-temp.yml
                         echo     restart: unless-stopped >> docker-compose-temp.yml
+                        echo     networks: >> docker-compose-temp.yml
+                        echo       - riskos-network >> docker-compose-temp.yml
                         echo. >> docker-compose-temp.yml
                         echo   frontend: >> docker-compose-temp.yml
                         echo     image: %DOCKER_REGISTRY%/%APP_NAME%-frontend:%IMAGE_TAG% >> docker-compose-temp.yml
                         echo     ports: >> docker-compose-temp.yml
                         echo       - "3000:80" >> docker-compose-temp.yml
                         echo     restart: unless-stopped >> docker-compose-temp.yml
-                        
-                        docker-compose -f docker-compose-temp.yml down || echo "Cleanup failed"
-                        docker-compose -f docker-compose-temp.yml up -d
+                        echo     networks: >> docker-compose-temp.yml
+                        echo       - riskos-network >> docker-compose-temp.yml
+                        echo. >> docker-compose-temp.yml
+                        echo networks: >> docker-compose-temp.yml
+                        echo   riskos-network: >> docker-compose-temp.yml
+                        echo     driver: bridge >> docker-compose-temp.yml
+
+                        docker-compose -f docker-compose-temp.yml down --remove-orphans || echo "Cleanup completed"
+                        docker-compose -f docker-compose-temp.yml up -d --force-recreate
                     """
                 }
             }
