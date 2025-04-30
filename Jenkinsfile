@@ -3,11 +3,16 @@ pipeline {
     
     environment {
         DOCKER_BUILDKIT = "1"  // Enable faster Docker builds
-        DOCKER_REGISTRY = "localhost:5000"  // Consider changing if not using a local registry
+        DOCKER_REGISTRY = "ankita504"  // Your DockerHub username
+        DOCKER_HUB_CREDS = credentials('123456789')  // Your DockerHub credentials ID in Jenkins
         APP_NAME = "riskos"
         MONGO_URI = credentials('mongodb-uri')
         // Cache directories for faster builds
         DOCKER_ARGS = "--build-arg BUILDKIT_INLINE_CACHE=1"
+        // Git configuration to help with large repositories
+        GIT_HTTP_LOW_SPEED_LIMIT = "1000"
+        GIT_HTTP_LOW_SPEED_TIME = "60"
+        GIT_FETCH_EXTRA_FLAGS = "--progress"
     }
     
     triggers {
@@ -22,6 +27,15 @@ pipeline {
     }
     
     stages {
+        stage('Verify Environment') {
+            steps {
+                script {
+                    bat 'docker info || (echo "Docker not running" && exit 1)'
+                    // Add other environment checks if needed
+                }
+            }
+        }
+        
         stage('Checkout') {
             steps {
                 // Clean workspace before checkout for Windows
@@ -30,7 +44,10 @@ pipeline {
                 checkout([
                     $class: 'GitSCM',
                     branches: [[name: '*/main']],
-                    extensions: [[$class: 'CleanBeforeCheckout']],
+                    extensions: [
+                        [$class: 'CleanBeforeCheckout'],
+                        [$class: 'ShallowClone', depth: 1]  // Add shallow clone to avoid issues with large repos
+                    ],
                     userRemoteConfigs: [[
                         url: 'https://github.com/AnkitaKapoor980/Riskos.git',
                         credentialsId: 'github-credentials'
@@ -98,9 +115,17 @@ pipeline {
                     
                     // Tag images with build number for better caching
                     env.IMAGE_TAG = "${BUILD_NUMBER}"
-                    
-                    // Check if Docker is running
-                    bat 'docker info || (echo "Docker not running" && exit 1)'
+                }
+            }
+        }
+        
+        stage('Docker Login') {
+            steps {
+                script {
+                    // Login to Docker Hub
+                    bat """
+                        echo %DOCKER_HUB_CREDS_PSW% | docker login -u %DOCKER_HUB_CREDS_USR% --password-stdin || (echo "Docker login failed" && exit 1)
+                    """
                 }
             }
         }
@@ -112,13 +137,13 @@ pipeline {
                         script {
                             // Build backend image
                             bat """
-                                docker build %DOCKER_ARGS% -t %DOCKER_REGISTRY%/%APP_NAME%-backend:%IMAGE_TAG% -t %DOCKER_REGISTRY%/%APP_NAME%-backend:latest -f backend.Dockerfile .
+                                docker build %DOCKER_ARGS% -t %DOCKER_REGISTRY%/%APP_NAME%-backend:%IMAGE_TAG% -t %DOCKER_REGISTRY%/%APP_NAME%-backend:latest -f backend.Dockerfile . || (echo "Backend Docker build failed" && exit 1)
                             """
                             
                             // Push images to registry
                             bat """
-                                docker push %DOCKER_REGISTRY%/%APP_NAME%-backend:%IMAGE_TAG% || echo "Failed to push but continuing"
-                                docker push %DOCKER_REGISTRY%/%APP_NAME%-backend:latest || echo "Failed to push but continuing"
+                                docker push %DOCKER_REGISTRY%/%APP_NAME%-backend:%IMAGE_TAG% || (echo "Failed to push backend image with tag %IMAGE_TAG%" && exit 1)
+                                docker push %DOCKER_REGISTRY%/%APP_NAME%-backend:latest || (echo "Failed to push backend latest image" && exit 1)
                             """
                         }
                     }
@@ -128,13 +153,13 @@ pipeline {
                         script {
                             // Build frontend image
                             bat """
-                                docker build %DOCKER_ARGS% -t %DOCKER_REGISTRY%/%APP_NAME%-frontend:%IMAGE_TAG% -t %DOCKER_REGISTRY%/%APP_NAME%-frontend:latest -f frontend.Dockerfile .
+                                docker build %DOCKER_ARGS% -t %DOCKER_REGISTRY%/%APP_NAME%-frontend:%IMAGE_TAG% -t %DOCKER_REGISTRY%/%APP_NAME%-frontend:latest -f frontend.Dockerfile . || (echo "Frontend Docker build failed" && exit 1)
                             """
                             
                             // Push images to registry
                             bat """
-                                docker push %DOCKER_REGISTRY%/%APP_NAME%-frontend:%IMAGE_TAG% || echo "Failed to push but continuing"
-                                docker push %DOCKER_REGISTRY%/%APP_NAME%-frontend:latest || echo "Failed to push but continuing"
+                                docker push %DOCKER_REGISTRY%/%APP_NAME%-frontend:%IMAGE_TAG% || (echo "Failed to push frontend image with tag %IMAGE_TAG%" && exit 1)
+                                docker push %DOCKER_REGISTRY%/%APP_NAME%-frontend:latest || (echo "Failed to push frontend latest image" && exit 1)
                             """
                         }
                     }
@@ -180,7 +205,7 @@ pipeline {
                     // Deploy using the temporary file
                     bat '''
                         docker-compose -f docker-compose-temp.yml down || echo "No containers to stop"
-                        docker-compose -f docker-compose-temp.yml up -d
+                        docker-compose -f docker-compose-temp.yml up -d || (echo "Docker Compose deployment failed" && exit 1)
                     '''
                 }
             }
@@ -190,6 +215,9 @@ pipeline {
     post {
         always {
             script {
+                // Logout from Docker Hub
+                bat "docker logout || echo 'Docker logout failed but continuing'"
+                
                 // Prune only dangling images to avoid removing cached layers
                 bat "docker image prune -f"
                 
