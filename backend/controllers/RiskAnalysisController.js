@@ -44,14 +44,40 @@ const calculateRisk = async (req, res) => {
 
 // =================== PREDICTION CONTROLLER SECTION ===================
 const analyzePortfolio = async (req, res) => {
+  // Log the incoming request data for debugging
+  console.log("Calling Flask with:", req.body);
+
   try {
-    const flaskUrl = "http://localhost:5002/analyze";
-    const response = await axios.post(flaskUrl, req.body);
+    // Make sure all numeric values are properly parsed before sending to Flask
+    // The frontend is sending strings but Flask expects numbers
+    const formattedPayload = {
+      portfolio: req.body.portfolio.map(stock => ({
+        stockName: stock.stockName,
+        quantity: parseInt(stock.quantity, 10),  // Convert string to integer
+        buyPrice: parseInt(stock.buyPrice, 10)   // Convert string to integer
+      })),
+      confidenceLevel: parseInt(req.body.confidenceLevel, 10),
+      forecastDays: parseInt(req.body.forecastDays, 10),
+      folderPath: req.body.folderPath
+    };
+
+    console.log("Formatted payload for Flask:", formattedPayload);
+
+    const flaskUrl = "http://localhost:5002/predict-portfolio";
+    const response = await axios.post(flaskUrl, formattedPayload, {
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      // Increase timeout if needed for complex calculations
+      timeout: 30000 // 30 seconds
+    });
 
     const result = response.data;
+    
+    // Save the prediction to database
     const newPrediction = new PredictionResult({
       user: req.user._id,
-      input: req.body,
+      input: formattedPayload, // Save the formatted input
       result,
       visualization: result.visualization || null,
     });
@@ -60,7 +86,30 @@ const analyzePortfolio = async (req, res) => {
     res.json(saved);
   } catch (error) {
     console.error("Prediction error:", error.message);
-    res.status(500).json({ error: "Failed to analyze portfolio" });
+    
+    // Enhanced error handling with more details
+    if (error.response) {
+      // The request was made and the server responded with a status code
+      // that falls out of the range of 2xx
+      console.error("Flask API error response:", error.response.data);
+      res.status(error.response.status).json({ 
+        error: "Failed to analyze portfolio", 
+        details: error.response.data.error || error.response.statusText 
+      });
+    } else if (error.request) {
+      // The request was made but no response was received
+      console.error("No response from Flask API");
+      res.status(504).json({ 
+        error: "Failed to analyze portfolio", 
+        details: "No response received from prediction service" 
+      });
+    } else {
+      // Something happened in setting up the request that triggered an Error
+      res.status(500).json({ 
+        error: "Failed to analyze portfolio", 
+        details: error.message 
+      });
+    }
   }
 };
 
