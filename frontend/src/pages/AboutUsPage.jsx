@@ -39,7 +39,7 @@ const AboutUsPage = () => {
         {/* Developer 2 */}
         <div className="flex flex-col items-center text-center transition-transform transform hover:rotate-[-3deg] hover:scale-105 duration-300">
           <img src={img5} alt="Developer 2" className="w-32 h-32 object-cover rounded-full mb-4" />
-          <h3 className="text-xl font-semibold">Humaira</h3>
+          <h3 className="text-xl font-semibold">Humaira Khan</h3>
           <p className="text-gray-600 mt-2">Karna kya hai</p>
         </div>
 
