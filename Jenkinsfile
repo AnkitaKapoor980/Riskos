@@ -2,14 +2,14 @@ pipeline {
     agent any
     
     environment {
-        DOCKER_BUILDKIT = "1"  # Enable faster Docker builds
+        DOCKER_BUILDKIT = "1"  // Enable faster Docker builds
         DOCKER_REGISTRY = "localhost:5000"
         APP_NAME = "riskos"
         MONGO_URI = credentials('mongodb-uri')
     }
     
     triggers {
-        githubPush()  # Trigger on GitHub commits via smee.io
+        githubPush()  // Trigger on GitHub commits via smee.io
     }
     
     options {
