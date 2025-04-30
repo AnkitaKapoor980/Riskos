@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+
 const {
   getPrice,
   calculateRisk,
@@ -15,7 +16,8 @@ router.get("/market/price/:symbol", getPrice);
 
 // ======= RISK ROUTES =======
 router.options("/risk/calculate", (req, res) => res.sendStatus(200));
-router.post("/risk/calculate", calculateRisk);
+router.post("/risk/calculate",protect, calculateRisk);
+
 
 // ======= PREDICTION ROUTES (protected) =======
 router.use("/predict", protect);
