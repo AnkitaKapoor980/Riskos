@@ -4,9 +4,6 @@ require("dotenv").config();
 
 const connectDB = async () => {
   try {
-    await mongoose.connect(MONGO_URI, {
-      // useNewUrlParser: true,
-      // useUnifiedTopology: true,
     const mongoURI = process.env.MONGO_URI || "mongodb://localhost:27017/RISKOS";
 
     await mongoose.connect(mongoURI, {
@@ -22,3 +19,4 @@ const connectDB = async () => {
 };
 
 module.exports = connectDB;
+
