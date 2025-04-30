@@ -1,19 +1,26 @@
-import React, { useState } from "react";
-import axios from "axios";
+import React, { useContext, useState, useEffect } from 'react';
+import axios from 'axios';
+import StockTooltip from '../components/StockTooltip';
 import { FaPlusCircle, FaMinusCircle } from "react-icons/fa";
-import { useAuth } from "../context/AuthContext"; // update path if needed
-import { PortfolioVisualizations } from "./PortfolioVisualizations"; // Import the new component
+import { useAuth } from "../context/AuthContext";
+import { PortfolioVisualizations } from "./PortfolioVisualizations";
+import { useNavigate } from 'react-router-dom';
+import { AuthContext } from '../context/AuthContext';
 
 const Assessment = () => {
+  const { isLoggedIn } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [stockData, setStockData] = useState([{ stockName: "", quantity: "", buyPrice: "" }]);
   const [confidenceLevel, setConfidenceLevel] = useState(95);
   const [forecastDays, setForecastDays] = useState(30);
-  const [activeMode, setActiveMode] = useState("calculate");
-  const [result, setResult] = useState(null);
+  const [riskType, setRiskType] = useState('');
+  const [result, setResult] = useState(null); // Corrected the variable name here
   const [loading, setLoading] = useState(false);
+  const [activeMode, setActiveMode] = useState("calculate");
   const [error, setError] = useState(null);
-  const { user } = useAuth(); // Access the auth context
+  const { user } = useAuth();
 
+  
   const handleAddStock = () => {
     setStockData([...stockData, { stockName: "", quantity: "", buyPrice: "" }]);
   };
@@ -34,34 +41,36 @@ const Assessment = () => {
   };
 
   const handleSubmit = async () => {
+    // Check if user is logged in *after* they press Submit
+    const token = user?.token || localStorage.getItem("token"); // Only use one source for the token
+    
+    if (!token || !user) {
+      navigate("/signup");
+      return;
+    }
+  
     // Validate inputs
-    const hasEmptyFields = stockData.some(stock => 
+    const hasEmptyFields = stockData.some(stock =>
       !stock.stockName || !stock.quantity || !stock.buyPrice
     );
-    
+  
     if (hasEmptyFields) {
       setError("Please fill in all stock details");
       return;
     }
-    
+  
     setLoading(true);
     setError(null);
-    
+  
     const payload = {
       portfolio: stockData,
       confidenceLevel,
       ...(activeMode === "forecast" && {
         forecastDays,
-        folderPath: "C:\\Users\\vishw\\Downloads\\Capstone_Project\\Riskos\\backend\\flask-api\\Scripts"
+        folderPath: "C:\\Users\\Aastha24\\OneDrive\\Desktop\\Riskos\\backend\\flask-api\\Scripts"
       }),
     };
-
-    const token = localStorage.getItem("token");
-
-    console.log("Token being sent in Authorization header:", token);
-    console.log("Final URL:", `http://localhost:5000/api/${activeMode === "forecast" ? "predict/analyze" : "risk/calculate"}`);
-    console.log("📤 Payload being sent to Express backend:", payload);
-
+  
     try {
       const response = await axios.post(
         `http://localhost:5000/api/${activeMode === "forecast" ? "predict/analyze" : "risk/calculate"}`,
@@ -80,6 +89,7 @@ const Assessment = () => {
       setLoading(false);
     }
   };
+  
 
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-6">
@@ -214,10 +224,7 @@ const Assessment = () => {
 
       {result && (
         <div className="mt-6">
-          {/* Portfolio Visualizations */}
           <PortfolioVisualizations result={result} />
-          
-          {/* Raw Data (Collapsible) */}
           <details className="mt-6 bg-gray-100 p-4 rounded border">
             <summary className="text-lg font-semibold cursor-pointer">📊 Raw Result Data</summary>
             <pre className="whitespace-pre-wrap text-sm mt-2 p-2 bg-white rounded">{JSON.stringify(result, null, 2)}</pre>

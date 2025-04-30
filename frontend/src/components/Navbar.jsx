@@ -25,19 +25,18 @@ export function Navbar() {
     <nav className="bg-white shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          
           {/* Left side - Logo and Links */}
           <div className="flex items-center space-x-4">
             <Link to="/">
               <img className="h-10 w-auto" src={logo} alt="Riskos Logo" />
             </Link>
 
-            {/* Navigation Links */}
-            <div className="hidden sm:flex sm:space-x-6">
+             {/* Navigation Links */}
+             <div className="hidden sm:flex sm:space-x-6">
               <NavLink to="/news">News</NavLink>
               <NavLink to="/assessment">Assessment</NavLink>
               <NavLink to="/learn">Learn</NavLink>
-              <NavLink to="/about">About Us</NavLink> {/* <-- About Us properly linked */}
+              <NavLink to="/about">About Us</NavLink>
             </div>
           </div>
 
@@ -72,7 +71,6 @@ export function Navbar() {
               </>
             )}
           </div>
-
         </div>
       </div>
     </nav>
