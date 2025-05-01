@@ -131,6 +131,14 @@ pipeline {
                         echo version: '3.8' > docker-compose-temp.yml
                         echo. >> docker-compose-temp.yml
                         echo services: >> docker-compose-temp.yml
+                        echo   mongodb: >> docker-compose-temp.yml
+                        echo     image: mongo:6.0 >> docker-compose-temp.yml
+                        echo     ports: >> docker-compose-temp.yml
+                        echo       - "27017:27017" >> docker-compose-temp.yml
+                        echo     volumes: >> docker-compose-temp.yml
+                        echo       - mongodb_data:/data/db >> docker-compose-temp.yml
+                        echo     restart: unless-stopped >> docker-compose-temp.yml
+                        echo. >> docker-compose-temp.yml
                         echo   backend: >> docker-compose-temp.yml
                         echo     image: %DOCKER_REGISTRY%/%APP_NAME%-backend:%IMAGE_TAG% >> docker-compose-temp.yml
                         echo     ports: >> docker-compose-temp.yml
@@ -138,7 +146,9 @@ pipeline {
                         echo       - "5101:5001" >> docker-compose-temp.yml
                         echo     environment: >> docker-compose-temp.yml
                         echo       - NODE_ENV=production >> docker-compose-temp.yml
-                        echo       - MONGO_URI=%MONGO_URI% >> docker-compose-temp.yml
+                        echo       - MONGO_URI=mongodb://mongodb:27017/riskos >> docker-compose-temp.yml
+                        echo     depends_on: >> docker-compose-temp.yml
+                        echo       - mongodb >> docker-compose-temp.yml
                         echo     restart: unless-stopped >> docker-compose-temp.yml
                         echo. >> docker-compose-temp.yml
                         echo   frontend: >> docker-compose-temp.yml
@@ -146,6 +156,9 @@ pipeline {
                         echo     ports: >> docker-compose-temp.yml
                         echo       - "3000:80" >> docker-compose-temp.yml
                         echo     restart: unless-stopped >> docker-compose-temp.yml
+                        echo. >> docker-compose-temp.yml
+                        echo volumes: >> docker-compose-temp.yml
+                        echo   mongodb_data: >> docker-compose-temp.yml
                         
                         docker-compose -f docker-compose-temp.yml down || echo "Cleanup failed"
                         docker-compose -f docker-compose-temp.yml up -d
