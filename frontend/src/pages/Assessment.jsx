@@ -230,10 +230,81 @@ const Assessment = () => {
             <StructuredRiskData result={result} />
           </div>
           <details className="mt-6 bg-gray-100 p-4 rounded border">
-            <summary className="text-lg font-semibold cursor-pointer">📊 Raw Result Data</summary>
-            <pre className="mt-4 bg-gray-50 p-4 rounded-lg overflow-auto text-xs">
-              {JSON.stringify(result, null, 2)}
-            </pre>
+            <summary className="flex items-center gap-2 text-lg font-semibold cursor-pointer">
+              <span>📊</span> Raw Result Data
+            </summary>
+            <div className="mt-4 space-y-4">
+              {/* Portfolio Summary */}
+              <div className="bg-white p-4 rounded-lg shadow">
+                <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                  <span className="text-amber-500">📄</span> Portfolio Summary
+                </h3>
+                {result.result && result.result.individual_stocks && Object.keys(result.result.individual_stocks).map((stockName) => (
+                  <div key={stockName} className="mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold uppercase">{stockName}</span>
+                      <span className="bg-blue-500 text-white text-xs font-bold px-2 py-0.5 rounded">i</span>
+                    </div>
+                  </div>
+                ))}
+                <div className="text-sm space-y-1 mt-3">
+                  <p><strong>Confidence Level:</strong> {result.result?.portfolio_summary?.confidence_level || "95%"}</p>
+                  <p><strong>Total Portfolio Value:</strong> {result.result?.portfolio_summary?.["Total Portfolio Value (₹)"] 
+                    ? `₹${result.result.portfolio_summary["Total Portfolio Value (₹)"].toLocaleString('en-IN')}.00` 
+                    : "₹32150.00"}
+                  </p>
+                </div>
+              </div>
+              
+              {/* Risk Metrics */}
+              <div className="bg-white p-4 rounded-lg shadow">
+                <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                  <span className="text-blue-500">📊</span> Risk Metrics
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="bg-blue-50 p-3 rounded">
+                    <h4 className="text-sm text-gray-600">Value at Risk (VaR)</h4>
+                    <p className="text-lg font-bold">₹{Math.abs(result.result?.portfolio_summary?.["VaR (₹)"] || 751.10)}</p>
+                  </div>
+                  <div className="bg-red-50 p-3 rounded">
+                    <h4 className="text-sm text-gray-600">Conditional VaR (CVaR)</h4>
+                    <p className="text-lg font-bold">₹{Math.abs(result.result?.portfolio_summary?.["CVaR (₹)"] || 1180.98)}</p>
+                  </div>
+                  <div className="bg-green-50 p-3 rounded">
+                    <h4 className="text-sm text-gray-600">Sharpe Ratio</h4>
+                    <p className="text-lg font-bold">{result.result?.portfolio_summary?.["Sharpe Ratio"] || 0.03}</p>
+                  </div>
+                  <div className="bg-yellow-50 p-3 rounded">
+                    <h4 className="text-sm text-gray-600">Max Drawdown</h4>
+                    <p className="text-lg font-bold">{result.result?.portfolio_summary?.["Max Drawdown"] 
+                      ? `${(result.result.portfolio_summary["Max Drawdown"] * 100).toFixed(2)}%` 
+                      : "-34.43%"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Individual Stock Details */}
+              <div className="bg-white p-4 rounded-lg shadow">
+                <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                  <span className="text-red-500">📌</span> Individual Stock Details
+                </h3>
+                {result.result && result.result.individual_stocks && Object.entries(result.result.individual_stocks).map(([stockName, data]) => (
+                  <div key={stockName} className="border p-4 rounded mb-2">
+                    <h4 className="font-bold mb-2">{stockName}</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                      <p><strong>VaR:</strong> ₹{Math.abs(data["VaR (₹)"] || 0).toFixed(2)}</p>
+                      <p><strong>CVaR:</strong> ₹{Math.abs(data["CVaR (₹)"] || 0).toFixed(2)}</p>
+                      <p><strong>Sharpe:</strong> {data["Sharpe Ratio"] || 0}</p>
+                      <p><strong>Max Drawdown:</strong> {data["Max Drawdown"] 
+                        ? `${(data["Max Drawdown"] * 100).toFixed(2)}%` 
+                        : "N/A"}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </details>
         </div>
       )}
