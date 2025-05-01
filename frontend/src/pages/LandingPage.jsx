@@ -56,7 +56,7 @@ function LandingPage() {
       <section className="w-11/12 max-w-6xl mx-auto mt-16 grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 leading-tight">
-            Make Investments Easy.<br />Smarter, Faster, Better.
+            Make Investments Easy and Simple.<br />Smarter, Faster, Better.
           </h1>
           <p className="mt-4 text-md text-gray-600">
             Access real-time stock price data of all Nifty-50 listed companies at your fingertips.
