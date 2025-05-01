@@ -25,36 +25,63 @@ const StructuredRiskData = ({ result }) => {
     return `${(numVal * 100).toFixed(2)}%`;
   };
 
-  // Extract data from result
+  // Extract data from result based on structure
   const portfolioSummary = result.portfolio_summary || {};
   const individualStocks = result.individual_stocks || {};
-  const stocksList = result.inputSummary || [];
+  
+  // Extract or create input summary
+  let stocksList = [];
+  if (result.inputSummary && Array.isArray(result.inputSummary)) {
+    stocksList = result.inputSummary;
+  } else if (Array.isArray(result.portfolio)) {
+    stocksList = result.portfolio;
+  } else {
+    // Create stock list from individual_stocks if necessary
+    stocksList = Object.keys(individualStocks).map(stockName => ({
+      stockName: stockName.toUpperCase(),
+      quantity: "N/A", // We don't have this info from the backend structure
+      buyPrice: "N/A"  // We don't have this info from the backend structure
+    }));
+  }
+  
+  const confidenceLevel = result.confidenceLevel || 95;
   
   return (
     <div className="space-y-6">
       {/* Portfolio Summary Section */}
       <div className="bg-gray-50 p-4 rounded-lg shadow">
         <h3 className="text-lg font-semibold mb-3">📋 Portfolio Summary</h3>
-        <ul className="list-disc pl-5 mb-4">
-          {stocksList.map((stock, idx) => (
-            <li key={idx} className="flex items-center">
-              <strong>{stock.stockName}</strong>: {stock.quantity} shares @ {formatCurrency(stock.buyPrice)}
-              {individualStocks[stock.stockName.toLowerCase()] && (
-                <StockTooltip 
-                  symbol={stock.stockName} 
-                  metrics={{
-                    "VaR (₹)": individualStocks[stock.stockName.toLowerCase()]["VaR (₹)"] || 0,
-                    "CVaR (₹)": individualStocks[stock.stockName.toLowerCase()]["CVaR (₹)"] || 0,
-                    "Sharpe Ratio": individualStocks[stock.stockName.toLowerCase()]["Sharpe Ratio"] || 0,
-                    "Max Drawdown": individualStocks[stock.stockName.toLowerCase()]["Max Drawdown"] || 0
-                  }} 
-                />
-              )}
-            </li>
-          ))}
-        </ul>
         
-        <p className="text-sm mb-2">Confidence Level: {result.confidenceLevel || "95"}%</p>
+        {stocksList.length > 0 && (
+          <ul className="list-disc pl-5 mb-4">
+            {stocksList.map((stock, idx) => (
+              <li key={idx} className="flex items-center">
+                <strong>{stock.stockName}</strong>
+                {stock.quantity && stock.quantity !== "N/A" && `: ${stock.quantity} shares`}
+                {stock.buyPrice && stock.buyPrice !== "N/A" && ` @ ${formatCurrency(stock.buyPrice)}`}
+                {individualStocks[stock.stockName.toLowerCase()] && (
+                  <StockTooltip 
+                    symbol={stock.stockName} 
+                    metrics={{
+                      "VaR (₹)": individualStocks[stock.stockName.toLowerCase()]["VaR (₹)"] || 0,
+                      "CVaR (₹)": individualStocks[stock.stockName.toLowerCase()]["CVaR (₹)"] || 0,
+                      "Sharpe Ratio": individualStocks[stock.stockName.toLowerCase()]["Sharpe Ratio"] || 0,
+                      "Max Drawdown": individualStocks[stock.stockName.toLowerCase()]["Max Drawdown"] || 0
+                    }} 
+                  />
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+        
+        <p className="text-sm mb-2">Confidence Level: {confidenceLevel}%</p>
+        
+        {portfolioSummary["Total Portfolio Value (₹)"] && (
+          <p className="text-sm font-medium">
+            Total Portfolio Value: {formatCurrency(portfolioSummary["Total Portfolio Value (₹)"])}
+          </p>
+        )}
       </div>
 
       {/* Risk Metrics Card Section */}
@@ -63,35 +90,28 @@ const StructuredRiskData = ({ result }) => {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
           <RiskMetricCard 
             title="Value at Risk (VaR)" 
-            value={formatCurrency(portfolioSummary["VaR (₹)"])} 
+            value={portfolioSummary["VaR (₹)"] ? formatCurrency(portfolioSummary["VaR (₹)"]) : "N/A"} 
             bgColor="bg-blue-50"
           />
           <RiskMetricCard 
             title="Conditional VaR (CVaR)" 
-            value={formatCurrency(portfolioSummary["CVaR (₹)"])} 
+            value={portfolioSummary["CVaR (₹)"] ? formatCurrency(portfolioSummary["CVaR (₹)"]) : "N/A"} 
             bgColor="bg-red-50"
           />
           <RiskMetricCard 
             title="Sharpe Ratio" 
-            value={portfolioSummary["Sharpe Ratio"] || "N/A"} 
+            value={portfolioSummary["Sharpe Ratio"] !== undefined ? portfolioSummary["Sharpe Ratio"] : "N/A"} 
             bgColor="bg-green-50"
           />
           <RiskMetricCard 
             title="Max Drawdown" 
-            value={formatPercent(portfolioSummary["Max Drawdown"])} 
+            value={portfolioSummary["Max Drawdown"] !== undefined ? formatPercent(portfolioSummary["Max Drawdown"]) : "N/A"} 
             bgColor="bg-yellow-50"
           />
-          {portfolioSummary["Total Portfolio Value (₹)"] && (
-            <RiskMetricCard 
-              title="Total Portfolio Value" 
-              value={formatCurrency(portfolioSummary["Total Portfolio Value (₹)"])} 
-              bgColor="bg-purple-50"
-            />
-          )}
         </div>
       </div>
 
-      {/* Individual Stocks Section (optional) */}
+      {/* Individual Stocks Section (only if data exists) */}
       {Object.keys(individualStocks).length > 0 && (
         <div className="bg-white p-4 rounded-lg shadow">
           <h3 className="text-lg font-semibold mb-3">📌 Individual Stock Details</h3>
@@ -101,16 +121,16 @@ const StructuredRiskData = ({ result }) => {
                 <h4 className="font-medium mb-2 capitalize">{stockName}</h4>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   <div className="text-sm">
-                    <span className="font-semibold">VaR:</span> {formatCurrency(metrics["VaR (₹)"])}
+                    <span className="font-semibold">VaR:</span> {metrics["VaR (₹)"] ? formatCurrency(metrics["VaR (₹)"]) : "N/A"}
                   </div>
                   <div className="text-sm">
-                    <span className="font-semibold">CVaR:</span> {formatCurrency(metrics["CVaR (₹)"])}
+                    <span className="font-semibold">CVaR:</span> {metrics["CVaR (₹)"] ? formatCurrency(metrics["CVaR (₹)"]) : "N/A"}
                   </div>
                   <div className="text-sm">
-                    <span className="font-semibold">Sharpe:</span> {metrics["Sharpe Ratio"]}
+                    <span className="font-semibold">Sharpe:</span> {metrics["Sharpe Ratio"] !== undefined ? metrics["Sharpe Ratio"] : "N/A"}
                   </div>
                   <div className="text-sm">
-                    <span className="font-semibold">Max Drawdown:</span> {formatPercent(metrics["Max Drawdown"])}
+                    <span className="font-semibold">Max Drawdown:</span> {metrics["Max Drawdown"] !== undefined ? formatPercent(metrics["Max Drawdown"]) : "N/A"}
                   </div>
                 </div>
               </div>

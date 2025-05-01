@@ -229,22 +229,7 @@ const Assessment = () => {
           <details className="mt-6 bg-gray-100 p-4 rounded border">
             <summary className="text-lg font-semibold cursor-pointer">📊 Raw Result Data</summary>
             <div className="mt-4 px-2">
-              <StructuredRiskData result={{
-                portfolio_summary: result.portfolioRisk || {},
-                individual_stocks: result.stockLevelMetrics ? 
-                  result.stockLevelMetrics.reduce((acc, stock) => {
-                    acc[stock.stockName.toLowerCase()] = {
-                      "VaR (₹)": stock.var,
-                      "CVaR (₹)": stock.cvar,
-                      "Sharpe Ratio": stock.sharpeRatio,
-                      "Max Drawdown": stock.maxDrawdown
-                    };
-                    return acc;
-                  }, {}) : 
-                  {},
-                inputSummary: result.inputSummary || [],
-                confidenceLevel: result.confidenceLevel
-              }} />
+              <StructuredRiskData result={result} />
             </div>
           </details>
         </div>
