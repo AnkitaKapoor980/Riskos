@@ -6,6 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import { PortfolioVisualizations } from "./PortfolioVisualizations";
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import { StructuredRiskData } from '../components/StructuredRiskData'; // Import the new component
 
 const Assessment = () => {
   const { isLoggedIn } = useContext(AuthContext);
@@ -14,7 +15,7 @@ const Assessment = () => {
   const [confidenceLevel, setConfidenceLevel] = useState(95);
   const [forecastDays, setForecastDays] = useState(30);
   const [riskType, setRiskType] = useState('');
-  const [result, setResult] = useState(null); // Corrected the variable name here
+  const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [activeMode, setActiveMode] = useState("calculate");
   const [error, setError] = useState(null);
@@ -227,7 +228,9 @@ const Assessment = () => {
           <PortfolioVisualizations result={result} />
           <details className="mt-6 bg-gray-100 p-4 rounded border">
             <summary className="text-lg font-semibold cursor-pointer">📊 Raw Result Data</summary>
-            <pre className="whitespace-pre-wrap text-sm mt-2 p-2 bg-white rounded">{JSON.stringify(result, null, 2)}</pre>
+            <div className="mt-2">
+              <StructuredRiskData result={result} />
+            </div>
           </details>
         </div>
       )}
