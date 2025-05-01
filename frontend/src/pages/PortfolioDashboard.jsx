@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import PortfolioChart from "../components/PortfolioChart";
 import PortfolioTable from "../components/PortfolioTable";
-import StockSearch from "../components/StockSearch";
+import StockSearch from "../components/Stocksearch";
 
 export function PortfolioDashboard() {
   const [portfolio, setPortfolio] = useState([]);
