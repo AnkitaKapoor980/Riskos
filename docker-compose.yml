@@ -1,26 +1,33 @@
+version: '3.9'
+
 services:
-  backend:
-    image: ${DOCKER_REGISTRY}/${APP_NAME}-backend:${IMAGE_TAG:-latest}
+  flask:
+    build:
+      context: ./flask-api
+    container_name: flask-container
     ports:
-      - "5100:5000"  # Changed from 5002 → 5100 (avoids conflicts)
-      - "5101:5001"  # Changed from 5003 → 5101
-    environment:
-      - NODE_ENV=production
-      - MONGO_URI=${MONGO_URI}
+      - "5002:5002"
     restart: unless-stopped
-    networks:
-      - riskos-network
 
   frontend:
-    image: ${DOCKER_REGISTRY}/${APP_NAME}-frontend:${IMAGE_TAG:-latest}
+    build:
+      context: ./frontend
+    container_name: frontend-container
     ports:
-      - "3000:80"  # Changed from 80 → 3000 (avoids root privileges + Jenkins conflict)
+      - "5001:80"
     depends_on:
-      - backend
+      - flask
     restart: unless-stopped
-    networks:
-      - riskos-network
 
-networks:
-  riskos-network:
-    driver: bridge
+  backend:
+    build:
+      context: ./backend
+    container_name: backend-container
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - frontend
+      - flask
+    restart: unless-stopped

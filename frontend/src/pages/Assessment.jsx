@@ -67,7 +67,7 @@ const Assessment = () => {
       confidenceLevel,
       ...(activeMode === "forecast" && {
         forecastDays,
-        folderPath: "C:\\Users\\Aastha24\\OneDrive\\Desktop\\Riskos\\backend\\flask-api\\Scripts"
+        folderPath: "flask-api\\Scripts"
       }),
     };
   
