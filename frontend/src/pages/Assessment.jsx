@@ -1,12 +1,12 @@
 import React, { useContext, useState, useEffect } from 'react';
 import axios from 'axios';
-import { StockTooltip } from '../components/StockTooltip';
+import  { StockTooltip } from '../components/StockTooltip';
 import { FaPlusCircle, FaMinusCircle } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
 import { PortfolioVisualizations } from "./PortfolioVisualizations";
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { StructuredRiskData } from '../components/StructuredRiskData';
+import { StructuredRiskData } from '../components/StructuredRiskData'; // Import the new component
 
 const Assessment = () => {
   const { isLoggedIn } = useContext(AuthContext);
@@ -43,7 +43,7 @@ const Assessment = () => {
 
   const handleSubmit = async () => {
     // Check if user is logged in *after* they press Submit
-    const token = user?.token || localStorage.getItem("token");
+    const token = user?.token || localStorage.getItem("token"); // Only use one source for the token
     
     if (!token || !user) {
       navigate("/signup");
@@ -226,12 +226,9 @@ const Assessment = () => {
       {result && (
         <div className="mt-6">
           <PortfolioVisualizations result={result} />
-          <div className="mt-6">
-            <StructuredRiskData result={result} />
-          </div>
           <details className="mt-6 bg-gray-100 p-4 rounded border">
-            <summary className="text-lg font-semibold cursor-pointer">📊 Raw Result Data</summary>
-            <div className="mt-2">
+            <summary className="text-lg font-semibold cursor-pointer">📊 Result </summary>
+            <div className="mt-4 px-2">
               <StructuredRiskData result={result} />
             </div>
           </details>

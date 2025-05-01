@@ -134,4 +134,4 @@ const PortfolioVisualizations = ({ result }) => {
   );
 };
 
-export { PortfolioVisualizations }; 
+export { PortfolioVisualizations };
