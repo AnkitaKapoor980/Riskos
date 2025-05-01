@@ -227,7 +227,7 @@ const Assessment = () => {
         <div className="mt-6">
           <PortfolioVisualizations result={result} />
           <details className="mt-6 bg-gray-100 p-4 rounded border">
-            <summary className="text-lg font-semibold cursor-pointer">📊 Raw Result Data</summary>
+            <summary className="text-lg font-semibold cursor-pointer">📊 Result </summary>
             <div className="mt-4 px-2">
               <StructuredRiskData result={result} />
             </div>

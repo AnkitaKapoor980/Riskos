@@ -1,5 +1,5 @@
 import React from "react";
-import StockTooltip from "./StockTooltip";
+import { StockTooltip } from "./StockTooltip";
 
 const RiskMetricCard = ({ title, value, bgColor = "bg-blue-100" }) => (
   <div className={`${bgColor} rounded-lg shadow-md p-4 flex-1`}>
