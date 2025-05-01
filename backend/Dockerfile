@@ -10,4 +10,4 @@ COPY . .
 # Expose backend port (5001)
 EXPOSE 5000
 
-CMD ["node", "index.js"]
+CMD ["node", "server.js"]
