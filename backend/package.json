@@ -22,7 +22,8 @@
     "node-fetch": "^3.3.2",
     "python-shell": "^5.0.0",
     "react-responsive-carousel": "^3.2.23",
-    "yahoo-finance2": "^2.13.3"
+    "yahoo-finance2": "^2.13.3",
+    "cheerio": "1.0.0"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
