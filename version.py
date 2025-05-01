@@ -1,3 +1,3 @@
-import cheerio
+import arch
 
-print(cheerio.__version__)
+print(arch.__version__)

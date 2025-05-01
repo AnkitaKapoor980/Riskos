@@ -29,7 +29,7 @@ const calculateRisk = async (req, res) => {
   console.log("Received request in Express:", req.body);
 
   try {
-    const flaskUrl = "http://localhost:5002/calculate-risk";
+    const flaskUrl = "http://flask:5002/calculate-risk";
     const response = await axios.post(flaskUrl, req.body);
 
     console.log("Flask response data:", response.data);
@@ -93,7 +93,7 @@ const analyzePortfolio = async (req, res) => {
 
     console.log("Formatted payload for Flask:", formattedPayload);
 
-    const flaskUrl = "http://localhost:5002/predict-portfolio";
+    const flaskUrl = "http://flask:5002/predict-portfolio";
     const response = await axios.post(flaskUrl, formattedPayload, {
       headers: {
         'Content-Type': 'application/json'
