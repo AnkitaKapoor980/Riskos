@@ -1,79 +1,125 @@
 import React from "react";
+import StockTooltip from "./StockTooltip";
 
-const RiskCard = ({ title, value }) => (
-  <div className="bg-blue-100 rounded-lg shadow-md p-4 w-full sm:w-1/2 md:w-1/3">
-    <h4 className="text-lg font-semibold mb-2">{title}</h4>
-    <p className="text-xl font-bold">{value}</p>
+const RiskMetricCard = ({ title, value, bgColor = "bg-blue-100" }) => (
+  <div className={`${bgColor} rounded-lg shadow-md p-4 flex-1`}>
+    <h4 className="text-sm font-semibold mb-1">{title}</h4>
+    <p className="text-lg font-bold">{value}</p>
   </div>
 );
 
 const StructuredRiskData = ({ result }) => {
-  // Check if result has the expected structure
+  // Early return if no result
   if (!result) return null;
   
-  const { inputSummary, portfolioRisk, stockLevelMetrics } = result;
+  // Format currency values
+  const formatCurrency = (val) => {
+    if (val === undefined || val === null) return "N/A";
+    return `₹${typeof val === 'number' ? Math.abs(val).toFixed(2) : val}`;
+  };
+  
+  // Format percentage values
+  const formatPercent = (val) => {
+    if (val === undefined || val === null) return "N/A";
+    const numVal = typeof val === 'string' ? parseFloat(val) : val;
+    return `${(numVal * 100).toFixed(2)}%`;
+  };
+
+  // Extract data from result
+  const portfolioSummary = result.portfolio_summary || {};
+  const individualStocks = result.individual_stocks || {};
+  const stocksList = result.inputSummary || [];
   
   return (
-    <div className="bg-white p-6 rounded-lg shadow-lg">
-      <h2 className="text-2xl font-bold mb-4">Portfolio Risk Analysis</h2>
-      
-      {inputSummary && (
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-2">🧾 Input Summary</h3>
-          <ul className="list-disc pl-5 text-gray-700">
-            {inputSummary.map((item, idx) => (
-              <li key={idx}>
-                <strong>{item.stockName}</strong> — {item.quantity} shares @ ₹{item.buyPrice}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-      
-      {portfolioRisk && (
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-2">📉 Portfolio Risk Metrics</h3>
-          <div className="flex flex-wrap gap-4">
-            <RiskCard title="Value at Risk (VaR)" value={`₹${portfolioRisk.var || 'N/A'}`} />
-            <RiskCard title="Conditional VaR (CVaR)" value={`₹${portfolioRisk.cvar || 'N/A'}`} />
-            <RiskCard title="Sharpe Ratio" value={portfolioRisk.sharpeRatio || 'N/A'} />
-            <RiskCard title="Max Drawdown" value={`₹${portfolioRisk.maxDrawdown || 'N/A'}`} />
-          </div>
-        </div>
-      )}
-      
-      {stockLevelMetrics && stockLevelMetrics.length > 0 && (
-        <div>
-          <h3 className="text-lg font-semibold mb-2">📌 Individual Stock Risk</h3>
-          {stockLevelMetrics.map((stock, idx) => (
-            <div key={idx} className="mb-4 border rounded p-4">
-              <h4 className="text-md font-bold mb-2">{stock.stockName}</h4>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <RiskCard title="VaR" value={`₹${stock.var || 'N/A'}`} />
-                <RiskCard title="CVaR" value={`₹${stock.cvar || 'N/A'}`} />
-                <RiskCard title="Sharpe Ratio" value={stock.sharpeRatio || 'N/A'} />
-                <RiskCard title="Max Drawdown" value={`₹${stock.maxDrawdown || 'N/A'}`} />
-              </div>
-            </div>
+    <div className="space-y-6">
+      {/* Portfolio Summary Section */}
+      <div className="bg-gray-50 p-4 rounded-lg shadow">
+        <h3 className="text-lg font-semibold mb-3">📋 Portfolio Summary</h3>
+        <ul className="list-disc pl-5 mb-4">
+          {stocksList.map((stock, idx) => (
+            <li key={idx} className="flex items-center">
+              <strong>{stock.stockName}</strong>: {stock.quantity} shares @ {formatCurrency(stock.buyPrice)}
+              {individualStocks[stock.stockName.toLowerCase()] && (
+                <StockTooltip 
+                  symbol={stock.stockName} 
+                  metrics={{
+                    "VaR (₹)": individualStocks[stock.stockName.toLowerCase()]["VaR (₹)"] || 0,
+                    "CVaR (₹)": individualStocks[stock.stockName.toLowerCase()]["CVaR (₹)"] || 0,
+                    "Sharpe Ratio": individualStocks[stock.stockName.toLowerCase()]["Sharpe Ratio"] || 0,
+                    "Max Drawdown": individualStocks[stock.stockName.toLowerCase()]["Max Drawdown"] || 0
+                  }} 
+                />
+              )}
+            </li>
           ))}
+        </ul>
+        
+        <p className="text-sm mb-2">Confidence Level: {result.confidenceLevel || "95"}%</p>
+      </div>
+
+      {/* Risk Metrics Card Section */}
+      <div className="bg-white p-4 rounded-lg shadow">
+        <h3 className="text-lg font-semibold mb-3">📊 Risk Metrics</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+          <RiskMetricCard 
+            title="Value at Risk (VaR)" 
+            value={formatCurrency(portfolioSummary["VaR (₹)"])} 
+            bgColor="bg-blue-50"
+          />
+          <RiskMetricCard 
+            title="Conditional VaR (CVaR)" 
+            value={formatCurrency(portfolioSummary["CVaR (₹)"])} 
+            bgColor="bg-red-50"
+          />
+          <RiskMetricCard 
+            title="Sharpe Ratio" 
+            value={portfolioSummary["Sharpe Ratio"] || "N/A"} 
+            bgColor="bg-green-50"
+          />
+          <RiskMetricCard 
+            title="Max Drawdown" 
+            value={formatPercent(portfolioSummary["Max Drawdown"])} 
+            bgColor="bg-yellow-50"
+          />
+          {portfolioSummary["Total Portfolio Value (₹)"] && (
+            <RiskMetricCard 
+              title="Total Portfolio Value" 
+              value={formatCurrency(portfolioSummary["Total Portfolio Value (₹)"])} 
+              bgColor="bg-purple-50"
+            />
+          )}
         </div>
-      )}
-      
-      {/* Handle any other potential data in the result */}
-      {Object.keys(result).filter(key => 
-        !['inputSummary', 'portfolioRisk', 'stockLevelMetrics'].includes(key) && 
-        result[key] && 
-        typeof result[key] === 'object'
-      ).map(key => (
-        <div key={key} className="mt-4">
-          <h3 className="text-lg font-semibold mb-2">{key.charAt(0).toUpperCase() + key.slice(1)}</h3>
-          <div className="bg-gray-50 p-3 rounded border">
-            <pre className="whitespace-pre-wrap text-sm">{JSON.stringify(result[key], null, 2)}</pre>
+      </div>
+
+      {/* Individual Stocks Section (optional) */}
+      {Object.keys(individualStocks).length > 0 && (
+        <div className="bg-white p-4 rounded-lg shadow">
+          <h3 className="text-lg font-semibold mb-3">📌 Individual Stock Details</h3>
+          <div className="space-y-3">
+            {Object.entries(individualStocks).map(([stockName, metrics], idx) => (
+              <div key={idx} className="border p-3 rounded-md">
+                <h4 className="font-medium mb-2 capitalize">{stockName}</h4>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div className="text-sm">
+                    <span className="font-semibold">VaR:</span> {formatCurrency(metrics["VaR (₹)"])}
+                  </div>
+                  <div className="text-sm">
+                    <span className="font-semibold">CVaR:</span> {formatCurrency(metrics["CVaR (₹)"])}
+                  </div>
+                  <div className="text-sm">
+                    <span className="font-semibold">Sharpe:</span> {metrics["Sharpe Ratio"]}
+                  </div>
+                  <div className="text-sm">
+                    <span className="font-semibold">Max Drawdown:</span> {formatPercent(metrics["Max Drawdown"])}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-      ))}
+      )}
     </div>
   );
 };
 
-export { StructuredRiskData, RiskCard };
+export { StructuredRiskData, RiskMetricCard };
