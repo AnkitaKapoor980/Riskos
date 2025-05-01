@@ -9,129 +9,246 @@ const RiskMetricCard = ({ title, value, bgColor = "bg-blue-100" }) => (
 );
 
 const StructuredRiskData = ({ result }) => {
-  // Early return if no result
-  if (!result) return null;
-  
-  // Format currency values
-  const formatCurrency = (val) => {
-    if (val === undefined || val === null) return "N/A";
-    return `₹${typeof val === 'number' ? Math.abs(val).toFixed(2) : val}`;
-  };
-  
-  // Format percentage values
-  const formatPercent = (val) => {
-    if (val === undefined || val === null) return "N/A";
-    const numVal = typeof val === 'string' ? parseFloat(val) : val;
-    return `${(numVal * 100).toFixed(2)}%`;
+  if (!result) return <div>No data available</div>;
+
+  // Helper for formatting currency values
+  const formatCurrency = (value) => {
+    if (value === undefined || value === null || value === "N/A") return "N/A";
+    
+    const numValue = typeof value === "string" ? parseFloat(value.replace(/[₹,]/g, "")) : value;
+    
+    if (isNaN(numValue)) return "N/A";
+    
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 2,
+    }).format(numValue);
   };
 
-  // Extract data from result based on structure
-  const portfolioSummary = result.portfolio_summary || {};
-  const individualStocks = result.individual_stocks || {};
+  // Helper for formatting percentage values
+  const formatPercentage = (value) => {
+    if (value === undefined || value === null || value === "N/A") return "N/A";
+    
+    const numValue = typeof value === "string" ? parseFloat(value.replace(/%/g, "")) : value;
+    
+    if (isNaN(numValue)) return "N/A";
+    
+    return `${numValue.toFixed(2)}%`;
+  };
+
+  // Extract portfolio summary data with fallbacks
+  let portfolioValue = "N/A";
+  let confidenceLevel = "95%"; // Default value
   
-  // Extract or create input summary
-  let stocksList = [];
-  if (result.inputSummary && Array.isArray(result.inputSummary)) {
-    stocksList = result.inputSummary;
-  } else if (Array.isArray(result.portfolio)) {
-    stocksList = result.portfolio;
-  } else {
-    // Create stock list from individual_stocks if necessary
-    stocksList = Object.keys(individualStocks).map(stockName => ({
-      stockName: stockName.toUpperCase(),
-      quantity: "N/A", // We don't have this info from the backend structure
-      buyPrice: "N/A"  // We don't have this info from the backend structure
-    }));
+  try {
+    // Check different possible structures
+    if (result.portfolioSummary && result.portfolioSummary.totalValue) {
+      portfolioValue = result.portfolioSummary.totalValue;
+    } else if (result["Total Portfolio Value"]) {
+      portfolioValue = result["Total Portfolio Value"];
+    } else if (typeof result === "object") {
+      // Search for total value in various possible properties
+      const possibleKeys = ["totalValue", "Total Portfolio Value", "Portfolio Value", "portfolioValue"];
+      for (const key of possibleKeys) {
+        if (result[key]) {
+          portfolioValue = result[key];
+          break;
+        }
+      }
+      
+      // Try to find confidence level
+      const confidenceKeys = ["Confidence Level", "confidenceLevel", "confidence"];
+      for (const key of confidenceKeys) {
+        if (result[key]) {
+          confidenceLevel = result[key];
+          if (typeof confidenceLevel === "number") {
+            confidenceLevel = `${confidenceLevel}%`;
+          }
+          break;
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Error extracting portfolio summary:", error);
   }
+
+  // Extract risk metrics with fallbacks for different structures and naming conventions
+  const getMetricValue = (metricNames, defaultValue = "N/A") => {
+    try {
+      // Try to find the metric in different possible locations and with different possible names
+      
+      // First check in result.riskMetrics
+      if (result.riskMetrics) {
+        for (const name of metricNames) {
+          if (result.riskMetrics[name] !== undefined) {
+            return result.riskMetrics[name];
+          }
+        }
+      }
+      
+      // Then check directly in result
+      for (const name of metricNames) {
+        if (result[name] !== undefined) {
+          return result[name];
+        }
+      }
+      
+      return defaultValue;
+    } catch (error) {
+      console.error(`Error accessing metrics ${metricNames}:`, error);
+      return defaultValue;
+    }
+  };
+
+  // Get risk metrics with various possible property names
+  const var_value = getMetricValue(["Value at Risk (VaR)", "VaR", "var", "ValueAtRisk"]);
+  const cvar_value = getMetricValue(["Conditional VaR (CVaR)", "CVaR", "cvar", "ConditionalVaR"]);
+  const sharpe = getMetricValue(["Sharpe Ratio", "Sharpe", "sharpe", "sharpeRatio"]);
+  const maxDrawdown = getMetricValue(["Max Drawdown", "Maximum Drawdown", "maxDrawdown", "MaxDrawdown"]);
+
+  // Extract individual stocks data
+  let stocks = [];
   
-  const confidenceLevel = result.confidenceLevel || 95;
-  
+  try {
+    // Try different potential formats for stock data
+    if (Array.isArray(result.inputSummary)) {
+      stocks = result.inputSummary;
+    } else if (Array.isArray(result.portfolio)) {
+      stocks = result.portfolio;
+    } else if (result.individualStocks) {
+      // Convert individual stocks object to array if needed
+      stocks = Object.entries(result.individualStocks).map(([ticker, data]) => ({
+        ticker,
+        ...data
+      }));
+    } else {
+      // Fallback: Extract stock information from any matching property
+      const possibleStockProps = ["stocks", "reliance", "individual_stock_details"];
+      for (const prop of possibleStockProps) {
+        if (result[prop] && typeof result[prop] === 'object') {
+          if (Array.isArray(result[prop])) {
+            stocks = result[prop];
+          } else {
+            stocks = Object.entries(result[prop]).map(([ticker, data]) => ({
+              ticker,
+              ...data
+            }));
+          }
+          break;
+        }
+      }
+      
+      // If no matching property was found, check if we need to create a single stock entry
+      if (stocks.length === 0 && result.ticker) {
+        stocks = [{ ticker: result.ticker, ...result }];
+      } else if (stocks.length === 0 && result.VaR && !Array.isArray(stocks)) {
+        // Create a single Reliance stock entry from top-level metrics
+        stocks = [{ 
+          ticker: "Reliance", 
+          VaR: var_value,
+          CVaR: cvar_value,
+          Sharpe: sharpe,
+          "Max Drawdown": maxDrawdown
+        }];
+      }
+    }
+  } catch (error) {
+    console.error("Error processing stock data:", error);
+    stocks = [];
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="text-gray-800">
       {/* Portfolio Summary Section */}
-      <div className="bg-gray-50 p-4 rounded-lg shadow">
-        <h3 className="text-lg font-semibold mb-3">📋 Portfolio Summary</h3>
-        
-        {stocksList.length > 0 && (
-          <ul className="list-disc pl-5 mb-4">
-            {stocksList.map((stock, idx) => (
-              <li key={idx} className="flex items-center">
-                <strong>{stock.stockName}</strong>
-                {stock.quantity && stock.quantity !== "N/A" && `: ${stock.quantity} shares`}
-                {stock.buyPrice && stock.buyPrice !== "N/A" && ` @ ${formatCurrency(stock.buyPrice)}`}
-                {individualStocks[stock.stockName.toLowerCase()] && (
-                  <StockTooltip 
-                    symbol={stock.stockName} 
-                    metrics={{
-                      "VaR (₹)": individualStocks[stock.stockName.toLowerCase()]["VaR (₹)"] || 0,
-                      "CVaR (₹)": individualStocks[stock.stockName.toLowerCase()]["CVaR (₹)"] || 0,
-                      "Sharpe Ratio": individualStocks[stock.stockName.toLowerCase()]["Sharpe Ratio"] || 0,
-                      "Max Drawdown": individualStocks[stock.stockName.toLowerCase()]["Max Drawdown"] || 0
-                    }} 
-                  />
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-        
-        <p className="text-sm mb-2">Confidence Level: {confidenceLevel}%</p>
-        
-        {portfolioSummary["Total Portfolio Value (₹)"] && (
-          <p className="text-sm font-medium">
-            Total Portfolio Value: {formatCurrency(portfolioSummary["Total Portfolio Value (₹)"])}
-          </p>
-        )}
+      <div className="mb-6">
+        <h3 className="text-lg font-semibold mb-2">📋 Portfolio Summary</h3>
+        <div className="bg-gray-50 rounded-lg shadow-md p-4">
+          <div className="mb-2">
+            <span className="font-medium">Confidence Level:</span>{" "}
+            <span>{confidenceLevel}</span>
+          </div>
+          <div>
+            <span className="font-medium">Total Portfolio Value:</span>{" "}
+            <span>{formatCurrency(portfolioValue)}</span>
+          </div>
+        </div>
       </div>
 
-      {/* Risk Metrics Card Section */}
-      <div className="bg-white p-4 rounded-lg shadow">
-        <h3 className="text-lg font-semibold mb-3">📊 Risk Metrics</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+      {/* Risk Metrics Section */}
+      <div className="mb-6">
+        <h3 className="text-lg font-semibold mb-2">📊 Risk Metrics</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <RiskMetricCard 
             title="Value at Risk (VaR)" 
-            value={portfolioSummary["VaR (₹)"] ? formatCurrency(portfolioSummary["VaR (₹)"]) : "N/A"} 
-            bgColor="bg-blue-50"
+            value={formatCurrency(var_value)} 
+            bgColor="bg-blue-100" 
           />
           <RiskMetricCard 
             title="Conditional VaR (CVaR)" 
-            value={portfolioSummary["CVaR (₹)"] ? formatCurrency(portfolioSummary["CVaR (₹)"]) : "N/A"} 
-            bgColor="bg-red-50"
+            value={formatCurrency(cvar_value)} 
+            bgColor="bg-red-100" 
           />
           <RiskMetricCard 
             title="Sharpe Ratio" 
-            value={portfolioSummary["Sharpe Ratio"] !== undefined ? portfolioSummary["Sharpe Ratio"] : "N/A"} 
-            bgColor="bg-green-50"
+            value={sharpe !== "N/A" ? Number(sharpe).toFixed(2) : "N/A"} 
+            bgColor="bg-green-100" 
           />
           <RiskMetricCard 
             title="Max Drawdown" 
-            value={portfolioSummary["Max Drawdown"] !== undefined ? formatPercent(portfolioSummary["Max Drawdown"]) : "N/A"} 
-            bgColor="bg-yellow-50"
+            value={formatPercentage(maxDrawdown)} 
+            bgColor="bg-yellow-100" 
           />
         </div>
       </div>
 
-      {/* Individual Stocks Section (only if data exists) */}
-      {Object.keys(individualStocks).length > 0 && (
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h3 className="text-lg font-semibold mb-3">📌 Individual Stock Details</h3>
-          <div className="space-y-3">
-            {Object.entries(individualStocks).map(([stockName, metrics], idx) => (
-              <div key={idx} className="border p-3 rounded-md">
-                <h4 className="font-medium mb-2 capitalize">{stockName}</h4>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  <div className="text-sm">
-                    <span className="font-semibold">VaR:</span> {metrics["VaR (₹)"] ? formatCurrency(metrics["VaR (₹)"]) : "N/A"}
+      {/* Individual Stocks Section */}
+      {stocks.length > 0 && (
+        <div>
+          <h3 className="text-lg font-semibold mb-2">💼 Individual Stock Details</h3>
+          <div className="space-y-4">
+            {stocks.map((stock, index) => (
+              <div 
+                key={stock.ticker || index}
+                className="bg-gray-50 rounded-lg shadow-md p-4"
+              >
+                <div className="flex flex-wrap items-center justify-between">
+                  <h4 className="text-lg font-medium text-blue-800">
+                    {stock.ticker || stock.name || `Stock ${index + 1}`}
+                  </h4>
+                  <div className="flex flex-wrap gap-4 mt-2 sm:mt-0">
+                    <div>
+                      <span className="text-sm text-gray-600">VaR:</span>{" "}
+                      <span className="font-medium">
+                        {formatCurrency(stock.VaR || stock.var)}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-sm text-gray-600">CVaR:</span>{" "}
+                      <span className="font-medium">
+                        {formatCurrency(stock.CVaR || stock.cvar)}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-sm text-gray-600">Sharpe:</span>{" "}
+                      <span className="font-medium">
+                        {(stock.Sharpe || stock.sharpe || stock["Sharpe Ratio"]) !== undefined 
+                          ? Number(stock.Sharpe || stock.sharpe || stock["Sharpe Ratio"]).toFixed(2) 
+                          : "N/A"}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-sm text-gray-600">Max Drawdown:</span>{" "}
+                      <span className="font-medium">
+                        {formatPercentage(stock["Max Drawdown"] || stock.maxDrawdown || stock.MaxDrawdown)}
+                      </span>
+                    </div>
                   </div>
-                  <div className="text-sm">
-                    <span className="font-semibold">CVaR:</span> {metrics["CVaR (₹)"] ? formatCurrency(metrics["CVaR (₹)"]) : "N/A"}
-                  </div>
-                  <div className="text-sm">
-                    <span className="font-semibold">Sharpe:</span> {metrics["Sharpe Ratio"] !== undefined ? metrics["Sharpe Ratio"] : "N/A"}
-                  </div>
-                  <div className="text-sm">
-                    <span className="font-semibold">Max Drawdown:</span> {metrics["Max Drawdown"] !== undefined ? formatPercent(metrics["Max Drawdown"]) : "N/A"}
-                  </div>
+                </div>
+                
+                {/* Tooltip with detailed metrics */}
+                <div className="hidden">
+                  <StockTooltip stock={stock} />
                 </div>
               </div>
             ))}
@@ -142,4 +259,4 @@ const StructuredRiskData = ({ result }) => {
   );
 };
 
-export { StructuredRiskData, RiskMetricCard };
+export  { StructuredRiskData };
